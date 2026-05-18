@@ -1,0 +1,262 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<style>
+    .period-filter {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
+    
+    .period-btn {
+        padding: 10px 20px;
+        border: 2px solid #e60012;
+        background: white;
+        color: #e60012;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .period-btn:hover {
+        background: #f5f5f5;
+    }
+    
+    .period-btn.active {
+        background: #e60012;
+        color: white;
+    }
+    
+    .stats-header {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .stat-card {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        border-left: 4px solid #e60012;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .stat-label {
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 8px;
+    }
+    
+    .stat-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1f2937;
+    }
+    
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        gap: 30px;
+        margin-top: 30px;
+    }
+    
+    .chart-container {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .chart-title {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 20px;
+        color: #1f2937;
+    }
+    
+    canvas {
+        max-height: 300px;
+    }
+</style>
+
+<div class="content-section">
+    <h2 class="section-title">Estadísticas - {{ periodo_label }}</h2>
+    
+    <div class="period-filter">
+        <a href="?period=dia" class="period-btn {% if period == 'dia' %}active{% endif %}">Hoy</a>
+        <a href="?period=semana" class="period-btn {% if period == 'semana' %}active{% endif %}">Esta Semana</a>
+        <a href="?period=mes" class="period-btn {% if period == 'mes' %}active{% endif %}">Este Mes</a>
+    </div>
+    
+    <div class="stats-header">
+        <div class="stat-card">
+            <div class="stat-label"><i class="fas fa-dollar-sign"></i> Total Ventas</div>
+            <div class="stat-value">{{ total_ventas }}</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-label"><i class="fas fa-shopping-cart"></i> Total Pedidos</div>
+            <div class="stat-value">{{ total_pedidos }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="charts-grid">
+    <div class="chart-container">
+        <div class="chart-title"><i class="fas fa-utensils"></i> Platos Más Vendidos</div>
+        <canvas id="productosChart"></canvas>
+    </div>
+    
+    <div class="chart-container">
+        <div class="chart-title"><i class="fas fa-chart-bar"></i> Ventas por Período</div>
+        <canvas id="ventasChart"></canvas>
+    </div>
+    
+    <div class="chart-container">
+        <div class="chart-title"><i class="fas fa-users"></i> Empleados - Mesas Atendidas</div>
+        <canvas id="empleadosChart"></canvas>
+    </div>
+    
+    <div class="chart-container">
+        <div class="chart-title"><i class="fas fa-chart-line"></i> Ventas por Categoría</div>
+        <canvas id="categoriasChart"></canvas>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+<script>
+    // Configuración global de Chart.js
+    Chart.defaults.font.family = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+    
+    const chartColors = {
+        primary: '#e60012',
+        secondary: '#f0440b',
+        success: '#10b981',
+        warning: '#f59e0b'
+    };
+    
+    // Gráfica de Productos Más Vendidos
+    const productosData = {{ top_productos_json|safe }};
+    if (productosData.labels.length > 0) {
+        new Chart(document.getElementById('productosChart'), {
+            type: 'bar',
+            data: {
+                labels: productosData.labels,
+                datasets: [{
+                    label: 'Cantidad Vendida',
+                    data: productosData.data,
+                    backgroundColor: chartColors.primary,
+                    borderColor: chartColors.secondary,
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: { beginAtZero: true, ticks: { stepSize: 1 } }
+                }
+            }
+        });
+    }
+    
+    // Gráfica de Ventas por Período
+    const ventasData = {{ ventas_json|safe }};
+    if (ventasData.labels.length > 0) {
+        new Chart(document.getElementById('ventasChart'), {
+            type: 'bar',
+            data: {
+                labels: ventasData.labels,
+                datasets: [{
+                    label: 'Ventas ($)',
+                    data: ventasData.data,
+                    backgroundColor: chartColors.secondary,
+                    borderColor: chartColors.primary,
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    }
+    
+    // Gráfica de Empleados
+    const empleadosData = {{ empleados_json|safe }};
+    if (empleadosData.labels.length > 0) {
+        new Chart(document.getElementById('empleadosChart'), {
+            type: 'bar',
+            data: {
+                labels: empleadosData.labels,
+                datasets: [{
+                    label: 'Mesas Atendidas',
+                    data: empleadosData.data,
+                    backgroundColor: chartColors.success,
+                    borderColor: '#059669',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: { beginAtZero: true, ticks: { stepSize: 1 } }
+                }
+            }
+        });
+    }
+    
+    // Gráfica de Categorías
+    const categoriasData = {{ categorias_json|safe }};
+    if (categoriasData.labels.length > 0) {
+        new Chart(document.getElementById('categoriasChart'), {
+            type: 'bar',
+            data: {
+                labels: categoriasData.labels,
+                datasets: [{
+                    label: 'Ventas ($)',
+                    data: categoriasData.data,
+                    backgroundColor: chartColors.warning,
+                    borderColor: '#d97706',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: { beginAtZero: true }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

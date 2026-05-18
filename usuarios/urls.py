@@ -1,0 +1,30 @@
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('login/', views.login_view, name='login'),
+    path('registro/', views.registro_view, name='registro'),
+    path('logout/', views.logout_view, name='logout'),
+    path('dashboard/', views.dashboard, name='dashboard'),
+    path('pedidos/guardar/', views.guardar_pedido, name='guardar_pedido'),
+    path('pedidos/<int:numero>/estado/', views.actualizar_estado_pedido, name='actualizar_estado_pedido'),
+    path('pedidos/<int:numero>/eliminar/', views.eliminar_pedido, name='eliminar_pedido'),
+    path('mesas/estado/', views.estado_mesas, name='estado_mesas'),
+    path('caja/pagar/', views.procesar_pago, name='procesar_pago'),
+    path('caja/factura/<str:venta_ids>/', views.factura, name='factura'),
+    path('reservas/', views.reservas, name='reservas'),
+    path('admin/', views.admin_panel, name='admin_panel'),
+    path('admin/ventas/', views.admin_ventas, name='admin_ventas'),
+    path('admin/empleados/', views.admin_empleados, name='admin_empleados'),
+    path('admin/empleados/crear/', views.admin_empleado_crear, name='admin_empleado_crear'),
+    path('admin/empleados/<int:id>/editar/', views.admin_empleado_editar, name='admin_empleado_editar'),
+    path('admin/empleados/<int:id>/eliminar/', views.admin_empleado_eliminar, name='admin_empleado_eliminar'),
+    path('admin/menu/', views.admin_menu, name='admin_menu'),
+    path('admin/menu/crear/', views.admin_producto_crear, name='admin_producto_crear'),
+    path('admin/menu/<int:id>/editar/', views.admin_producto_editar, name='admin_producto_editar'),
+    path('admin/menu/<int:id>/eliminar/', views.admin_producto_eliminar, name='admin_producto_eliminar'),
+    path('admin/zonas/', views.admin_zonas, name='admin_zonas'),
+    path('admin/zonas/guardar/', views.guardar_zonas, name='guardar_zonas'),
+    path('admin/mesas/', views.admin_mesas, name='admin_mesas'),
+    path('admin/mesas/guardar/', views.guardar_mesas, name='guardar_mesas'),
+]

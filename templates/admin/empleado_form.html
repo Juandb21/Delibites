@@ -1,0 +1,102 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="content-section">
+    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 30px;">
+        <a href="{% url 'admin_empleados' %}" style="color: #666; text-decoration: none; font-size: 18px;">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <h2 class="section-title" style="margin: 0;">{{ title }}</h2>
+    </div>
+
+    {% if messages %}
+    <div style="margin-bottom: 20px;">
+        {% for message in messages %}
+        <div style="background-color: {% if message.tags %}#d4edda{% else %}#f8d7da{% endif %}; color: {% if message.tags %}#155724{% else %}#721c24{% endif %}; padding: 12px 20px; border-radius: 4px; margin-bottom: 10px;">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div style="background-color: white; padding: 30px; border-radius: 8px; max-width: 600px;">
+        <form method="POST" novalidate>
+            {% csrf_token %}
+            
+            <div style="margin-bottom: 20px;">
+                <label for="{{ form.first_name.id_for_label }}" style="display: block; margin-bottom: 8px; font-weight: 600;">{{ form.first_name.label }}</label>
+                {{ form.first_name }}
+                {% if form.first_name.errors %}
+                <span style="color: #E63946; font-size: 14px;">{{ form.first_name.errors.0 }}</span>
+                {% endif %}
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label for="{{ form.username.id_for_label }}" style="display: block; margin-bottom: 8px; font-weight: 600;">{{ form.username.label }}</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                <span style="color: #E63946; font-size: 14px;">{{ form.username.errors.0 }}</span>
+                {% endif %}
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label for="{{ form.email.id_for_label }}" style="display: block; margin-bottom: 8px; font-weight: 600;">{{ form.email.label }}</label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                <span style="color: #E63946; font-size: 14px;">{{ form.email.errors.0 }}</span>
+                {% endif %}
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label for="{{ form.password.id_for_label }}" style="display: block; margin-bottom: 8px; font-weight: 600;">{{ form.password.label }}</label>
+                {{ form.password }}
+                {% if form.password.errors %}
+                <span style="color: #E63946; font-size: 14px;">{{ form.password.errors.0 }}</span>
+                {% endif %}
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label for="{{ form.rol.id_for_label }}" style="display: block; margin-bottom: 8px; font-weight: 600;">{{ form.rol.label }}</label>
+                {{ form.rol }}
+                {% if form.rol.errors %}
+                <span style="color: #E63946; font-size: 14px;">{{ form.rol.errors.0 }}</span>
+                {% endif %}
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label for="{{ form.telefono.id_for_label }}" style="display: block; margin-bottom: 8px; font-weight: 600;">{{ form.telefono.label }}</label>
+                {{ form.telefono }}
+                {% if form.telefono.errors %}
+                <span style="color: #E63946; font-size: 14px;">{{ form.telefono.errors.0 }}</span>
+                {% endif %}
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 30px;">
+                <button type="submit" style="background-color: #E63946; color: white; border: none; padding: 12px 25px; border-radius: 4px; cursor: pointer; font-weight: 600;">
+                    <i class="fas fa-save"></i> Guardar
+                </button>
+                <a href="{% url 'admin_empleados' %}" style="background-color: #6c757d; color: white; border: none; padding: 12px 25px; border-radius: 4px; cursor: pointer; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-times"></i> Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #E63946;
+        box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.1);
+    }
+</style>
+{% endblock %}

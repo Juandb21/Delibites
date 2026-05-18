@@ -1,0 +1,1384 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+{% csrf_token %}
+<style>
+    .mesas-container {
+        display: flex;
+        gap: 16px;
+        min-height: calc(100vh - 280px);
+        width: 100%;
+        align-items: stretch;
+    }
+
+    .mesas-sidebar {
+        flex: 0 0 430px;
+        width: 430px;
+        min-width: 430px;
+        background: white;
+        border-radius: 8px;
+        padding: 18px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        overflow-y: auto;
+        border: 1px solid #e0e0e0;
+    }
+
+    .mesas-sidebar h3 {
+        margin: 0 0 15px 0;
+        color: #333;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .mesas-canvas-container {
+        flex: 1;
+        min-width: 0;
+        background: white;
+        border-radius: 8px;
+        padding: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        display: flex;
+        flex-direction: column;
+        border: 1px solid #e0e0e0;
+    }
+
+    .canvas-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .canvas-header h2 {
+        margin: 0;
+        color: #333;
+        font-size: 20px;
+    }
+
+    .canvas-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .canvas-actions button {
+        padding: 10px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn-nueva {
+        background: #5B6EFF;
+        color: white;
+    }
+
+    .btn-nueva:hover {
+        background: #4a5ad4;
+    }
+
+    .btn-guardar {
+        background: #E63946;
+        color: white;
+    }
+
+    .btn-guardar:hover {
+        background: #d12b37;
+    }
+
+    .canvas-wrapper {
+        flex: 1;
+        position: relative;
+        border: 2px dashed #ccc;
+        border-radius: 4px;
+        background: #fafafa;
+        overflow: auto;
+        min-height: 700px;
+        width: 100%;
+    }
+
+    #mesasCanvas {
+        border: none;
+        cursor: default;
+        display: block;
+        min-width: 900px;
+        min-height: 800px;
+    }
+
+    .zona-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .zona-item {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        padding: 14px;
+        margin-bottom: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .zona-item:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-color: #ccc;
+    }
+
+    .zona-item.active {
+        background: #f0f3ff;
+        border-color: #5B6EFF;
+        box-shadow: inset 0 0 0 2px rgba(91, 110, 255, 0.2);
+    }
+
+    .zona-item-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+    }
+
+    .zona-color-swatch {
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        border: 1px solid #999;
+        flex-shrink: 0;
+    }
+
+    .zona-item-name {
+        font-weight: 600;
+        color: #333;
+        font-size: 16px;
+        flex: 1;
+        line-height: 1.25;
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    .zona-item-mesas {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 8px;
+        padding-left: 34px;
+    }
+
+    .zona-item-actions {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .zona-item-actions button {
+        background: none;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        cursor: pointer;
+        padding: 4px 8px;
+        color: #666;
+        font-size: 12px;
+        transition: all 0.2s ease;
+    }
+
+    .zona-item-actions button:hover {
+        border-color: #999;
+        color: #333;
+    }
+
+    .container {
+        max-width: none;
+        width: 100%;
+        margin: 18px auto;
+        padding: 0 18px;
+    }
+
+    @media (max-width: 1100px) {
+        .mesas-container {
+            flex-direction: column;
+        }
+
+        .mesas-sidebar {
+            flex: none;
+            width: 100%;
+            min-width: 0;
+            max-height: 320px;
+        }
+
+        #mesasCanvas {
+            min-width: 760px;
+        }
+    }
+
+    /* Modal para nueva mesa */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-overlay.active {
+        display: flex;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 8px;
+        padding: 30px;
+        max-width: 400px;
+        width: 90%;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .modal-header {
+        margin: 0 0 20px 0;
+        color: #333;
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 6px;
+        color: #333;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #5B6EFF;
+        box-shadow: 0 0 0 3px rgba(91, 110, 255, 0.1);
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 24px;
+    }
+
+    .modal-actions button {
+        flex: 1;
+        padding: 10px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn-crear {
+        background: #5B6EFF;
+        color: white;
+    }
+
+    .btn-crear:hover {
+        background: #4a5ad4;
+    }
+
+    .btn-cancelar {
+        background: #f0f0f0;
+        color: #333;
+    }
+
+    .btn-cancelar:hover {
+        background: #e0e0e0;
+    }
+
+    .instructions {
+        font-size: 12px;
+        color: #666;
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid #e0e0e0;
+        line-height: 1.6;
+    }
+</style>
+
+<div class="canvas-header" style="margin: -15px -15px 20px -15px; padding: 15px; border-bottom: 1px solid #e0e0e0;">
+    <h2><i class="fas fa-chair"></i> Editor de Disposición de Mesas</h2>
+    <p style="margin: 0; color: #666; font-size: 14px;">Arrastra las mesas para cambiar su posición en el layout</p>
+</div>
+
+<div class="mesas-container">
+    <div class="mesas-sidebar">
+        <h3><i class="fas fa-list"></i> Zonas</h3>
+        <ul class="zona-list" id="zonasList">
+            {% for zona in zonas %}
+            <li class="zona-item" onclick="selectZona({{ zona.id }})">
+                <div class="zona-item-header">
+                    <div class="zona-color-swatch" style="background: {{ zona.color }};"></div>
+                    <div class="zona-item-name">{{ zona.nombre }}</div>
+                </div>
+                <div class="zona-item-mesas">
+                    <i class="fas fa-chair"></i> {{ zona.mesas_set.count }} mesas
+                </div>
+                <div class="zona-item-actions">
+                    <button type="button" onclick="editZona(event, {{ zona.id }})"><i class="fas fa-edit"></i></button>
+                    <button type="button" onclick="deleteZona(event, {{ zona.id }})"><i class="fas fa-trash"></i></button>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+
+        <button class="canvas-actions" style="width: 100%; margin-top: 15px; background: #5B6EFF; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer;" onclick="openNewMesaModal()">
+            <i class="fas fa-plus"></i> Nueva Mesa
+        </button>
+
+        <div class="instructions">
+            <strong>Cómo usar:</strong><br>
+            • Arrastra las mesas en el canvas<br>
+            • Haz clic en zona para filtrar<br>
+            • Crea nuevas mesas con el botón<br>
+            • Elimina mesas con el icono de basura<br>
+            • Guarda cambios abajo
+        </div>
+    </div>
+
+    <div class="mesas-canvas-container">
+        <div class="canvas-actions">
+            <button class="btn-nueva" onclick="openNewMesaModal()">
+                <i class="fas fa-plus"></i> Nueva Mesa
+            </button>
+            <button class="btn-guardar" onclick="guardarCambios()">
+                <i class="fas fa-save"></i> Guardar Cambios
+            </button>
+        </div>
+
+        <div class="canvas-wrapper">
+            <canvas id="mesasCanvas" width="1200" height="800"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para nueva mesa -->
+<div class="modal-overlay" id="nuevaMesaModal">
+    <div class="modal-content">
+        <h3 class="modal-header" id="modalTitle">Nueva Mesa</h3>
+        
+        <div class="form-group">
+            <label>Número de Mesa</label>
+            <input type="number" id="mesaNumero" placeholder="Ej: 1" min="1">
+        </div>
+
+        <div class="form-group">
+            <label>Capacidad</label>
+            <select id="mesaCapacidad">
+                <option value="2">2 personas</option>
+                <option value="4" selected>4 personas</option>
+                <option value="6">6 personas</option>
+                <option value="8">8 personas</option>
+                <option value="10">10 personas</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Zona</label>
+            <select id="mesaZona">
+                <option value="">Sin asignar</option>
+                {% for zona in zonas %}
+                <option value="{{ zona.id }}">{{ zona.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="modal-actions">
+            <button type="button" class="btn-crear" onclick="crearMesa()"><i class="fas fa-check"></i> Crear</button>
+            <button type="button" class="btn-cancelar" onclick="closeModal()"><i class="fas fa-times"></i> Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+
+<script>
+let canvas;
+let zonas = {{ zonas_json|safe }};
+let mesas = {{ mesas_json|safe }};
+let selectedZonaId = null;
+let isEditingMesa = false;
+let currentViewTransform = null;
+let tempMesaId = -1;
+const MESA_SIZE = 96;
+
+// Hacer canvas accesible globalmente
+window.canvas = null;
+
+// Función para crear formas de zonas (reutilizar del editor de zonas)
+function createZonaShape(zona) {
+    switch(zona.shape) {
+        case 'l-shape':
+            return createLShape(zona);
+        case 'u-shape':
+            return createUShape(zona);
+        case 'triangle':
+            return createTriangle(zona);
+        case 'hexagon':
+            return createHexagon(zona);
+        default:
+            return createRectangleShape(zona);
+    }
+}
+
+function createRectangleShape(zona) {
+    return new fabric.Rect({
+        left: zona.x,
+        top: zona.y,
+        width: zona.width,
+        height: zona.height,
+        fill: zona.color,
+        stroke: '#999',
+        strokeWidth: 2,
+        opacity: zona.opacity || 0.22,
+        selectable: false,
+        evented: false,
+    });
+}
+
+function createLShape(zona) {
+    const w = zona.width;
+    const h = zona.height;
+    const thickness = Math.min(w, h) * 0.4;
+    const points = [
+        { x: zona.x, y: zona.y },
+        { x: zona.x + w, y: zona.y },
+        { x: zona.x + w, y: zona.y + thickness },
+        { x: zona.x + thickness, y: zona.y + thickness },
+        { x: zona.x + thickness, y: zona.y + h },
+        { x: zona.x, y: zona.y + h }
+    ];
+    return new fabric.Polygon(points, {
+        fill: zona.color,
+        stroke: '#999',
+        strokeWidth: 2,
+        opacity: zona.opacity || 0.22,
+        selectable: false,
+        evented: false,
+    });
+}
+
+function createUShape(zona) {
+    const w = zona.width;
+    const h = zona.height;
+    const thickness = Math.min(w, h) * 0.4;
+    const colWidth = (w - thickness) / 2;
+    const points = [
+        { x: zona.x, y: zona.y },
+        { x: zona.x + colWidth, y: zona.y },
+        { x: zona.x + colWidth, y: zona.y + h - thickness },
+        { x: zona.x + colWidth + thickness, y: zona.y + h - thickness },
+        { x: zona.x + colWidth + thickness, y: zona.y },
+        { x: zona.x + w, y: zona.y },
+        { x: zona.x + w, y: zona.y + h },
+        { x: zona.x, y: zona.y + h }
+    ];
+    return new fabric.Polygon(points, {
+        fill: zona.color,
+        stroke: '#999',
+        strokeWidth: 2,
+        opacity: zona.opacity || 0.22,
+        selectable: false,
+        evented: false,
+    });
+}
+
+function createTriangle(zona) {
+    const points = [
+        { x: zona.x + zona.width / 2, y: zona.y },
+        { x: zona.x + zona.width, y: zona.y + zona.height },
+        { x: zona.x, y: zona.y + zona.height }
+    ];
+    return new fabric.Polygon(points, {
+        fill: zona.color,
+        stroke: '#999',
+        strokeWidth: 2,
+        opacity: zona.opacity || 0.22,
+        selectable: false,
+        evented: false,
+    });
+}
+
+function createHexagon(zona) {
+    const cx = zona.x + zona.width / 2;
+    const cy = zona.y + zona.height / 2;
+    const r = Math.min(zona.width, zona.height) / 2;
+    const points = [];
+    for (let i = 0; i < 6; i++) {
+        const angle = (i * 60 - 90) * Math.PI / 180;
+        points.push({
+            x: cx + r * Math.cos(angle),
+            y: cy + r * Math.sin(angle)
+        });
+    }
+    return new fabric.Polygon(points, {
+        fill: zona.color,
+        stroke: '#999',
+        strokeWidth: 2,
+        opacity: zona.opacity || 0.22,
+        selectable: false,
+        evented: false,
+    });
+}
+
+function createMesaObject(mesa, left, top, size) {
+    const rect = new fabric.Rect({
+        left: -size / 2,
+        top: -size / 2,
+        width: size,
+        height: size,
+        fill: '#f8fafc',
+        stroke: '#333',
+        strokeWidth: 3,
+        rx: 4,
+        ry: 4,
+        originX: 'left',
+        originY: 'top',
+    });
+
+    const label = new fabric.Text(`Mesa\n${mesa.numero}`, {
+        left: 0,
+        top: 0,
+        fontSize: Math.max(15, Math.min(22, size / 4.2)),
+        fontWeight: 'bold',
+        fill: '#333',
+        textAlign: 'center',
+        originX: 'center',
+        originY: 'center',
+        selectable: false,
+        evented: false,
+    });
+
+    const group = new fabric.Group([rect, label], {
+        left: left,
+        top: top,
+        originX: 'center',
+        originY: 'center',
+        selectable: true,
+        hasControls: false,
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockRotation: true,
+        transparentCorners: false,
+    });
+
+    group.mesaId = mesa.id;
+    group.mesaNumero = mesa.numero;
+    group.mesaSize = size;
+    return group;
+}
+
+function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+}
+
+function fitZoneToCanvas(zona) {
+    const padding = 90;
+    const scale = Math.min(
+        (canvas.width - padding * 2) / zona.width,
+        (canvas.height - padding * 2) / zona.height
+    );
+    const width = zona.width * scale;
+    const height = zona.height * scale;
+    const x = (canvas.width - width) / 2;
+    const y = (canvas.height - height) / 2 + 20;
+
+    return {
+        sourceX: zona.x,
+        sourceY: zona.y,
+        sourceWidth: zona.width,
+        sourceHeight: zona.height,
+        displayX: x,
+        displayY: y,
+        displayWidth: width,
+        displayHeight: height,
+        scale: scale,
+    };
+}
+
+function originalToDisplay(mesa, transform, size) {
+    const centerX = mesa.x + (mesa.width || size) / 2;
+    const centerY = mesa.y + (mesa.height || size) / 2;
+    return {
+        x: clamp(
+            transform.displayX + (centerX - transform.sourceX) * transform.scale,
+            transform.displayX + size / 2,
+            transform.displayX + transform.displayWidth - size / 2
+        ),
+        y: clamp(
+            transform.displayY + (centerY - transform.sourceY) * transform.scale,
+            transform.displayY + size / 2,
+            transform.displayY + transform.displayHeight - size / 2
+        )
+    };
+}
+
+function displayToOriginal(obj, transform) {
+    const size = obj.mesaSize || MESA_SIZE;
+    const originalCenterX = transform.sourceX + (obj.left - transform.displayX) / transform.scale;
+    const originalCenterY = transform.sourceY + (obj.top - transform.displayY) / transform.scale;
+    return {
+        x: Math.round(originalCenterX - size / 2),
+        y: Math.round(originalCenterY - size / 2),
+        width: size,
+        height: size,
+    };
+}
+
+function loadMesasOnCanvas() {
+    canvas.clear();
+    currentViewTransform = null;
+
+    if (selectedZonaId) {
+        // Si hay zona seleccionada, mostrar solo esa zona AMPLIADA AL MÁXIMO
+        const selectedZona = zonas.find(z => z.id === selectedZonaId);
+        if (selectedZona) {
+            // Obtener mesas de esta zona
+            const mesasDeZona = mesas.filter(m => m.zona_id === selectedZonaId);
+            const transform = fitZoneToCanvas(selectedZona);
+            currentViewTransform = transform;
+            const displayX = transform.displayX;
+            const displayY = transform.displayY;
+            const displayWidth = transform.displayWidth;
+            const displayHeight = transform.displayHeight;
+
+            // Dibujar la zona con su forma correcta (escalada para ocupar el canvas)
+            // Crear una versión escalada de la zona
+            const scaledZona = {
+                ...selectedZona,
+                x: displayX,
+                y: displayY,
+                width: displayWidth,
+                height: displayHeight,
+                opacity: 0.34
+            };
+            
+            const zoneShape = createZonaShape(scaledZona);
+            zoneShape.set({
+                stroke: selectedZona.color,
+                strokeWidth: 4,
+            });
+            canvas.add(zoneShape);
+
+            // Agregar etiqueta de zona muy grande
+            const text = new fabric.Text(selectedZona.nombre, {
+                left: canvas.width / 2,
+                top: Math.max(18, displayY - 52),
+                fontSize: 26,
+                fontWeight: 'bold',
+                fill: '#1f2937',
+                textAlign: 'center',
+                originX: 'center',
+                selectable: false,
+                evented: false,
+            });
+            canvas.add(text);
+
+            mesasDeZona.forEach((mesa) => {
+                const size = MESA_SIZE;
+                const position = originalToDisplay(mesa, transform, size);
+                const table = createMesaObject(mesa, position.x, position.y, size);
+                canvas.add(table);
+            });
+
+            if (false && mesasDeZona.length > 0) {
+                // Reorganizar mesas en grid dentro de la zona
+                const mesaPadding = 20;
+                const mesasX = displayX + mesaPadding;
+                const mesasY = displayY + 60;
+                const mesasWidth = displayWidth - (mesaPadding * 2);
+                const mesasHeight = displayHeight - 90;
+
+                // Calcular grid basado en número de mesas
+                const mesasPerRow = Math.ceil(Math.sqrt(mesasDeZona.length));
+                const mesasPerCol = Math.ceil(mesasDeZona.length / mesasPerRow);
+                
+                // Mesas redimensionadas para que quepan sin scroll
+                const mesaWidth = (mesasWidth / mesasPerRow) - 12;
+                const mesaHeight = (mesasHeight / mesasPerCol) - 12;
+                const mesaGapX = 12;
+                const mesaGapY = 12;
+
+                mesasDeZona.forEach((mesa, idx) => {
+                    const row = Math.floor(idx / mesasPerRow);
+                    const col = idx % mesasPerRow;
+                    
+                    const newX = mesasX + (col * (mesaWidth + mesaGapX));
+                    const newY = mesasY + (row * (mesaHeight + mesaGapY));
+                    
+                    // Crear rectángulo de mesa
+                    const rect = new fabric.Rect({
+                        left: newX,
+                        top: newY,
+                        width: mesaWidth,
+                        height: mesaHeight,
+                        fill: '#f8fafc',
+                        stroke: '#333',
+                        strokeWidth: 3,
+                        rx: 8,
+                        ry: 8,
+                        selectable: true,
+                        hasControls: true,
+                        hasBorders: true,
+                        transparentCorners: false,
+                    });
+                    
+                    rect.mesaId = mesa.id;
+                    rect.mesaNumero = mesa.numero;
+                    canvas.add(rect);
+
+                    // Agregar número de mesa con texto grande
+                    const label = new fabric.Text(`Mesa\n${mesa.numero}`, {
+                        left: newX + mesaWidth / 2,
+                        top: newY + mesaHeight / 2 - 20,
+                        fontSize: Math.max(24, mesaWidth / 4),
+                        fontWeight: 'bold',
+                        fill: '#333',
+                        textAlign: 'center',
+                        selectable: false,
+                        evented: false,
+                    });
+                    canvas.add(label);
+                });
+            }
+        }
+    } else {
+        // Vista general: mostrar todas las zonas y mesas
+        // Cargar zonas como background
+        for (let zona of zonas) {
+            const shape = createZonaShape(zona);
+            canvas.add(shape);
+
+            // Agregar etiqueta de zona
+            const text = new fabric.Text(zona.nombre, {
+                left: zona.x + zona.width / 2,
+                top: zona.y + 10,
+                fontSize: 12,
+                fontWeight: 'bold',
+                fill: zona.color,
+                textAlign: 'center',
+                selectable: false,
+                evented: false,
+            });
+            canvas.add(text);
+        }
+
+        // Cargar todas las mesas
+        for (let mesa of mesas) {
+            const size = MESA_SIZE;
+            const table = createMesaObject(
+                mesa,
+                mesa.x + (mesa.width || size) / 2,
+                mesa.y + (mesa.height || size) / 2,
+                size
+            );
+            canvas.add(table);
+
+            // Agregar número de mesa
+            if (false) {
+            const label = addTextLabel(
+                mesa.x + mesa.width / 2,
+                mesa.y + mesa.height / 2,
+                `Mesa\n${mesa.numero}`
+            );
+            canvas.add(label);
+            }
+        }
+    }
+
+    canvas.renderAll();
+}
+
+function initCanvas() {
+    const canvasElement = document.getElementById('mesasCanvas');
+    const wrapper = document.querySelector('.canvas-wrapper');
+    
+    // Usar tamaño del contenedor como referencia, pero mínimo 1000x700
+    const availableWidth = Math.max(wrapper.offsetWidth - 20, 1000);
+    const availableHeight = Math.max(wrapper.offsetHeight - 20, 700);
+    
+    // Usar un tamaño que se adapte bien
+    const canvasWidth = 1200;
+    const canvasHeight = 800;
+    
+    // Actualizar los atributos del canvas
+    canvasElement.width = canvasWidth;
+    canvasElement.height = canvasHeight;
+    
+    canvas = new fabric.Canvas('mesasCanvas', {
+        backgroundColor: 'white',
+        width: canvasWidth,
+        height: canvasHeight,
+    });
+    
+    // Hacer accesible globalmente
+    window.canvas = canvas;
+    window.mesas = mesas;
+    window.zonas = zonas;
+
+    // Event listeners
+    canvas.on('object:moving', function(e) {
+        const obj = e.target;
+        if (obj && obj.mesaId && currentViewTransform) {
+            const size = obj.mesaSize || MESA_SIZE;
+            obj.set({
+                left: clamp(
+                    obj.left,
+                    currentViewTransform.displayX + size / 2,
+                    currentViewTransform.displayX + currentViewTransform.displayWidth - size / 2
+                ),
+                top: clamp(
+                    obj.top,
+                    currentViewTransform.displayY + size / 2,
+                    currentViewTransform.displayY + currentViewTransform.displayHeight - size / 2
+                )
+            });
+        }
+    });
+
+    canvas.on('object:modified', function(e) {
+        const obj = e.target;
+        if (obj && obj.mesaId) {
+            const mesa = mesas.find(m => m.id === obj.mesaId);
+            if (mesa) {
+                const position = currentViewTransform
+                    ? displayToOriginal(obj, currentViewTransform)
+                    : {
+                        x: Math.round(obj.left - (obj.mesaSize || MESA_SIZE) / 2),
+                        y: Math.round(obj.top - (obj.mesaSize || MESA_SIZE) / 2),
+                        width: obj.mesaSize || MESA_SIZE,
+                        height: obj.mesaSize || MESA_SIZE,
+                    };
+
+                mesa.x = position.x;
+                mesa.y = position.y;
+                mesa.width = position.width;
+                mesa.height = position.height;
+                console.log(`Mesa ${mesa.numero} moved to (${mesa.x}, ${mesa.y})`);
+            }
+        }
+    });
+
+    canvas.on('object:selected', function(e) {
+        const obj = e.target;
+        if (obj && obj.mesaId) {
+            console.log('Mesa seleccionada:', obj.mesaNumero);
+        }
+    });
+
+    loadMesasOnCanvas();
+}
+
+function openNewMesaModal() {
+    isEditingMesa = false;
+    document.getElementById('mesaNumero').value = '';
+    document.getElementById('mesaCapacidad').value = '4';
+    document.getElementById('mesaZona').value = selectedZonaId || '';
+    document.getElementById('modalTitle').textContent = 'Nueva Mesa';
+    document.getElementById('nuevaMesaModal').classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('nuevaMesaModal').classList.remove('active');
+}
+
+function crearMesa() {
+    const numero = parseInt(document.getElementById('mesaNumero').value);
+    const capacidad = parseInt(document.getElementById('mesaCapacidad').value);
+    const zona_id = document.getElementById('mesaZona').value || null;
+
+    if (!numero) {
+        alert('Por favor ingresa el número de mesa');
+        return;
+    }
+
+    if (mesas.some(m => parseInt(m.numero) === numero)) {
+        alert(`Ya existe una mesa con el numero ${numero}.`);
+        return;
+    }
+
+    const nueva_mesa = {
+        id: tempMesaId--,
+        numero: numero,
+        capacidad: capacidad,
+        x: 100,
+        y: 100,
+        width: MESA_SIZE,
+        height: MESA_SIZE,
+        zona_id: zona_id ? parseInt(zona_id) : null,
+    };
+
+    mesas.push(nueva_mesa);
+    loadMesasOnCanvas();
+    closeModal();
+}
+
+function selectZona(zonaId) {
+    if (selectedZonaId === zonaId) {
+        selectedZonaId = null; // Deseleccionar si hace clic dos veces
+    } else {
+        selectedZonaId = zonaId;
+    }
+    
+    // Actualizar estilos visuales
+    document.querySelectorAll('.zona-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    if (selectedZonaId) {
+        // Encontrar y resaltar el elemento activo
+        document.querySelectorAll('.zona-item').forEach(item => {
+            const zonaNombre = item.querySelector('.zona-item-name');
+            const zonaData = zonas.find(z => z.id === selectedZonaId);
+            if (zonaData && zonaNombre.textContent.trim() === zonaData.nombre) {
+                item.classList.add('active');
+            }
+        });
+    }
+    
+    loadMesasOnCanvas();
+}
+
+function editZona(e, zonaId) {
+    e.stopPropagation();
+    // Redirigir a la página de zonas para editar
+    window.location.href = '/admin/zonas/';
+}
+
+function deleteZona(e, zonaId) {
+    e.stopPropagation();
+    // Redirigir a la página de zonas para eliminar
+    window.location.href = '/admin/zonas/';
+}
+
+function guardarCambios() {
+    // Enviar datos al servidor
+    fetch('/admin/mesas/guardar/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+        },
+        body: JSON.stringify({ mesas: mesas })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (Array.isArray(data.mesas)) {
+                data.mesas.forEach(savedMesa => {
+                    const mesa = mesas.find(m => m.id === savedMesa.temp_id);
+                    if (mesa) {
+                        mesa.id = savedMesa.id;
+                    }
+                });
+            }
+            alert(data.message || 'Cambios guardados exitosamente');
+        } else {
+            const duplicatedNumber = (data.error || '').match(/numero (\d+)/i);
+            if (duplicatedNumber) {
+                const numeroDuplicado = parseInt(duplicatedNumber[1]);
+                mesas = mesas.filter(m => !(m.id < 0 && parseInt(m.numero) === numeroDuplicado));
+                window.mesas = mesas;
+                loadMesasOnCanvas();
+            }
+            alert('Error: ' + (data.error || 'Error desconocido'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al guardar cambios: ' + error.message);
+    });
+}
+
+// Inicializar canvas cuando carga la página
+document.addEventListener('DOMContentLoaded', function() {
+    initCanvas();
+});
+</script>
+
+<script>
+// Editor de mesas reconstruido: zonas visibles, mesas cuadradas y una sola fuente de verdad visual.
+(function() {
+    const TABLE_SIZE = 94;
+    const EDGE_PADDING = 44;
+    const ZONE_LABEL_HEIGHT = 48;
+    const stateByMesaId = new Map();
+
+    function clampValue(value, min, max) {
+        return Math.min(Math.max(value, min), max);
+    }
+
+    function getZoneBounds(zona, frame) {
+        const availableWidth = Math.max(260, frame.width - EDGE_PADDING * 2);
+        const availableHeight = Math.max(210, frame.height - EDGE_PADDING * 2 - ZONE_LABEL_HEIGHT);
+        const zoneWidth = Math.max(1, zona.width || 200);
+        const zoneHeight = Math.max(1, zona.height || 150);
+        const scale = Math.min(availableWidth / zoneWidth, availableHeight / zoneHeight);
+        const width = zoneWidth * scale;
+        const height = zoneHeight * scale;
+
+        return {
+            x: frame.x + EDGE_PADDING + (availableWidth - width) / 2,
+            y: frame.y + EDGE_PADDING + ZONE_LABEL_HEIGHT + (availableHeight - height) / 2,
+            width: width,
+            height: height
+        };
+    }
+
+    function getFramesForZones(zonasToDraw) {
+        if (zonasToDraw.length === 1) {
+            return [{
+                zona: zonasToDraw[0],
+                x: 36,
+                y: 28,
+                width: canvas.width - 72,
+                height: canvas.height - 56
+            }];
+        }
+
+        const columns = Math.min(2, Math.max(1, zonasToDraw.length));
+        const gap = 34;
+        const frameWidth = (canvas.width - 72 - gap * (columns - 1)) / columns;
+        const frameHeight = 340;
+
+        return zonasToDraw.map((zona, index) => {
+            const col = index % columns;
+            const row = Math.floor(index / columns);
+            return {
+                zona,
+                x: 36 + col * (frameWidth + gap),
+                y: 28 + row * (frameHeight + gap),
+                width: frameWidth,
+                height: frameHeight
+            };
+        });
+    }
+
+    function buildDisplayZona(zona, frame) {
+        const bounds = getZoneBounds(zona, frame);
+        return {
+            ...zona,
+            x: bounds.x,
+            y: bounds.y,
+            width: bounds.width,
+            height: bounds.height,
+            opacity: selectedZonaId ? 0.38 : 0.28
+        };
+    }
+
+    function drawZoneHeader(zona, frame) {
+        const headerBg = new fabric.Rect({
+            left: frame.x,
+            top: frame.y,
+            width: frame.width,
+            height: frame.height,
+            fill: '#ffffff',
+            stroke: zona.color,
+            strokeWidth: selectedZonaId ? 4 : 2,
+            rx: 8,
+            ry: 8,
+            selectable: false,
+            evented: false
+        });
+
+        const title = new fabric.Text(zona.nombre, {
+            left: frame.x + 18,
+            top: frame.y + 12,
+            fontSize: selectedZonaId ? 30 : 22,
+            fontWeight: 'bold',
+            fill: '#1f2937',
+            selectable: false,
+            evented: false
+        });
+
+        const count = mesas.filter(m => m.zona_id === zona.id).length;
+        const subtitle = new fabric.Text(`${count} mesas`, {
+            left: frame.x + 18,
+            top: frame.y + (selectedZonaId ? 44 : 36),
+            fontSize: 13,
+            fill: '#4b5563',
+            selectable: false,
+            evented: false
+        });
+
+        canvas.add(headerBg);
+        canvas.add(title);
+        canvas.add(subtitle);
+    }
+
+    function makeTable(mesa, zona, centerX, centerY, size) {
+        const rect = new fabric.Rect({
+            left: -size / 2,
+            top: -size / 2,
+            width: size,
+            height: size,
+            fill: '#f8fafc',
+            stroke: '#222',
+            strokeWidth: 3,
+            rx: 3,
+            ry: 3
+        });
+
+        const number = new fabric.Text(`Mesa ${mesa.numero}`, {
+            left: 0,
+            top: -10,
+            fontSize: 19,
+            fontWeight: 'bold',
+            fill: '#111827',
+            originX: 'center',
+            originY: 'center',
+            textAlign: 'center',
+            selectable: false,
+            evented: false
+        });
+
+        const zoneName = new fabric.Text(zona.nombre, {
+            left: 0,
+            top: 18,
+            fontSize: 10,
+            fill: '#4b5563',
+            originX: 'center',
+            originY: 'center',
+            textAlign: 'center',
+            selectable: false,
+            evented: false
+        });
+
+        const group = new fabric.Group([rect, number, zoneName], {
+            left: centerX,
+            top: centerY,
+            originX: 'center',
+            originY: 'center',
+            selectable: true,
+            hasControls: false,
+            hasBorders: true,
+            lockScalingX: true,
+            lockScalingY: true,
+            lockRotation: true,
+            transparentCorners: false
+        });
+
+        group.mesaId = mesa.id;
+        group.mesaNumero = mesa.numero;
+        group.tableSize = size;
+        return group;
+    }
+
+    function tableGridPosition(index, total, displayZona, size) {
+        const columns = Math.max(1, Math.ceil(Math.sqrt(total)));
+        const rows = Math.max(1, Math.ceil(total / columns));
+        const gapX = displayZona.width / columns;
+        const gapY = displayZona.height / rows;
+        const col = index % columns;
+        const row = Math.floor(index / columns);
+
+        return {
+            x: displayZona.x + gapX * col + gapX / 2,
+            y: displayZona.y + gapY * row + gapY / 2
+        };
+    }
+
+    function savedMesaPosition(mesa, zona, displayZona, size) {
+        const mesaWidth = mesa.width || TABLE_SIZE;
+        const mesaHeight = mesa.height || TABLE_SIZE;
+        const centerX = (mesa.x || 0) + mesaWidth / 2;
+        const centerY = (mesa.y || 0) + mesaHeight / 2;
+        const hasSavedPosition =
+            Number.isFinite(centerX) &&
+            Number.isFinite(centerY) &&
+            centerX >= zona.x &&
+            centerX <= zona.x + zona.width &&
+            centerY >= zona.y &&
+            centerY <= zona.y + zona.height;
+
+        if (!hasSavedPosition) {
+            return null;
+        }
+
+        return {
+            x: displayZona.x + ((centerX - zona.x) / zona.width) * displayZona.width,
+            y: displayZona.y + ((centerY - zona.y) / zona.height) * displayZona.height
+        };
+    }
+
+    function drawMesa(mesa, zona, displayZona, index, total) {
+        const size = selectedZonaId ? TABLE_SIZE : 78;
+        const pos = savedMesaPosition(mesa, zona, displayZona, size) || tableGridPosition(index, total, displayZona, size);
+        const x = clampValue(pos.x, displayZona.x + size / 2, displayZona.x + displayZona.width - size / 2);
+        const y = clampValue(pos.y, displayZona.y + size / 2, displayZona.y + displayZona.height - size / 2);
+        const table = makeTable(mesa, zona, x, y, size);
+
+        stateByMesaId.set(mesa.id, {
+            zona,
+            displayZona,
+            size
+        });
+        canvas.add(table);
+    }
+
+    function drawZona(zona, frame) {
+        drawZoneHeader(zona, frame);
+
+        const displayZona = buildDisplayZona(zona, frame);
+        const shape = createZonaShape(displayZona);
+        shape.set({
+            stroke: zona.color,
+            strokeWidth: selectedZonaId ? 4 : 3,
+            selectable: false,
+            evented: false
+        });
+        canvas.add(shape);
+
+        const zoneWatermark = new fabric.Text(`Zona: ${zona.nombre}`, {
+            left: displayZona.x + displayZona.width / 2,
+            top: displayZona.y + 16,
+            fontSize: selectedZonaId ? 24 : 17,
+            fontWeight: 'bold',
+            fill: '#111827',
+            opacity: 0.65,
+            originX: 'center',
+            selectable: false,
+            evented: false
+        });
+        canvas.add(zoneWatermark);
+
+        const mesasDeZona = mesas.filter(m => m.zona_id === zona.id);
+        mesasDeZona.forEach((mesa, index) => drawMesa(mesa, zona, displayZona, index, mesasDeZona.length));
+    }
+
+    function persistMesaFromObject(obj) {
+        const mesa = mesas.find(m => m.id === obj.mesaId);
+        const state = stateByMesaId.get(obj.mesaId);
+        if (!mesa || !state) return;
+
+        const dz = state.displayZona;
+        const z = state.zona;
+        const centerRatioX = (obj.left - dz.x) / dz.width;
+        const centerRatioY = (obj.top - dz.y) / dz.height;
+
+        const storedWidth = mesa.width || TABLE_SIZE;
+        const storedHeight = mesa.height || TABLE_SIZE;
+        mesa.width = storedWidth;
+        mesa.height = storedHeight;
+        mesa.zona_id = z.id;
+        mesa.x = Math.round(z.x + z.width * centerRatioX - storedWidth / 2);
+        mesa.y = Math.round(z.y + z.height * centerRatioY - storedHeight / 2);
+    }
+
+    function persistAllVisibleMesas() {
+        if (!canvas) return;
+
+        canvas.getObjects().forEach(obj => {
+            if (obj.mesaId) {
+                persistMesaFromObject(obj);
+            }
+        });
+    }
+
+    const originalGuardarCambios = window.guardarCambios;
+    window.guardarCambios = function() {
+        persistAllVisibleMesas();
+        originalGuardarCambios();
+    };
+
+    window.loadMesasOnCanvas = function() {
+        canvas.clear();
+        stateByMesaId.clear();
+
+        const zonasToDraw = selectedZonaId
+            ? zonas.filter(z => z.id === selectedZonaId)
+            : zonas;
+
+        if (zonasToDraw.length === 0) {
+            canvas.renderAll();
+            return;
+        }
+
+        getFramesForZones(zonasToDraw).forEach(frame => drawZona(frame.zona, frame));
+        canvas.renderAll();
+    };
+
+    window.initCanvas = function() {
+        const canvasElement = document.getElementById('mesasCanvas');
+        const wrapper = document.querySelector('.canvas-wrapper');
+        const canvasWidth = Math.max(900, wrapper.clientWidth - 24);
+        canvasElement.width = canvasWidth;
+        canvasElement.height = Math.max(800, Math.ceil(zonas.length / 2) * 374 + 56);
+
+        canvas = new fabric.Canvas('mesasCanvas', {
+            backgroundColor: 'white',
+            width: canvasWidth,
+            height: canvasElement.height
+        });
+
+        window.canvas = canvas;
+        window.mesas = mesas;
+        window.zonas = zonas;
+
+        canvas.on('object:moving', function(e) {
+            const obj = e.target;
+            const state = obj && stateByMesaId.get(obj.mesaId);
+            if (!state) return;
+
+            const dz = state.displayZona;
+            const size = state.size;
+            obj.set({
+                left: clampValue(obj.left, dz.x + size / 2, dz.x + dz.width - size / 2),
+                top: clampValue(obj.top, dz.y + size / 2, dz.y + dz.height - size / 2)
+            });
+        });
+
+        canvas.on('object:modified', function(e) {
+            if (e.target && e.target.mesaId) {
+                persistMesaFromObject(e.target);
+            }
+        });
+
+        loadMesasOnCanvas();
+    };
+})();
+</script>
+
+{% endblock %}

@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: #fff7f0;
+            color: #111827;
+        }
+
+        .topbar {
+            background: linear-gradient(90deg, #e60012, #f0440b);
+            color: white;
+            padding: 10px 38px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.16);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand i {
+            font-size: 24px;
+        }
+
+        .brand h1 {
+            font-size: 20px;
+            line-height: 1.1;
+        }
+
+        .brand span {
+            display: block;
+            font-size: 12px;
+            font-weight: 400;
+            opacity: 0.95;
+            margin-top: 3px;
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            font-size: 14px;
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.18);
+            color: white;
+            border: 0;
+            border-radius: 8px;
+            padding: 10px 16px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+
+        .page {
+            width: min(1320px, calc(100% - 72px));
+            margin: 30px auto;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 18px;
+        }
+
+        .page-header h2 {
+            font-size: 22px;
+            margin-bottom: 7px;
+        }
+
+        .page-header p {
+            color: #4b5563;
+            font-size: 14px;
+        }
+
+        .zone-tabs {
+            display: flex;
+            gap: 8px;
+            padding: 6px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 18px rgba(17, 24, 39, 0.12);
+            overflow-x: auto;
+        }
+
+        .zone-tab {
+            border: 0;
+            border-radius: 8px;
+            padding: 12px 16px;
+            background: #f3f4f6;
+            color: #1f2937;
+            cursor: pointer;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            white-space: nowrap;
+        }
+
+        .zone-tab.active {
+            background: #ef3500;
+            color: white;
+        }
+
+        .zone-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
+            border: 1px solid rgba(0, 0, 0, 0.14);
+        }
+
+        .zone-tab.active .zone-dot {
+            border-color: rgba(255, 255, 255, 0.75);
+        }
+
+        .zone-panel {
+            display: none;
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 6px 22px rgba(17, 24, 39, 0.12);
+        }
+
+        .zone-panel.active {
+            display: block;
+        }
+
+        .zone-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 20px;
+        }
+
+        .zone-title h3 {
+            font-size: 30px;
+        }
+
+        .zone-title span {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .zone-layout {
+            position: relative;
+            border: 3px solid var(--zone-color);
+            border-radius: 12px;
+            background: color-mix(in srgb, var(--zone-color) 22%, white);
+            background-repeat: no-repeat;
+            overflow: hidden;
+            min-height: 520px;
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        .zone-layout.shape-l-shape {
+            clip-path: polygon(0 0, 100% 0, 100% 40%, 40% 40%, 40% 100%, 0 100%);
+        }
+
+        .zone-layout.shape-u-shape {
+            clip-path: polygon(0 0, 30% 0, 30% 60%, 70% 60%, 70% 0, 100% 0, 100% 100%, 0 100%);
+        }
+
+        .zone-layout.shape-triangle {
+            clip-path: polygon(50% 0, 100% 100%, 0 100%);
+        }
+
+        .zone-layout.shape-hexagon {
+            clip-path: polygon(50% 0, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+        }
+
+        .zone-layout-name {
+            position: absolute;
+            top: 20px;
+            left: 24px;
+            font-size: 30px;
+            font-weight: 800;
+            color: #111827;
+            opacity: 0.72;
+            pointer-events: none;
+        }
+
+        .table-card {
+            position: absolute;
+            width: 104px;
+            height: 104px;
+            border: 3px solid #222;
+            border-radius: 8px;
+            background: #f8fafc;
+            box-shadow: 0 8px 18px rgba(17, 24, 39, 0.18);
+            cursor: pointer;
+            padding: 10px;
+            text-align: center;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .table-card.table-libre {
+            background: #f8fafc;
+            border-color: #222;
+        }
+
+        .table-card.table-ocupada {
+            background: #fee2e2;
+            border-color: #e11d48;
+            box-shadow: 0 8px 18px rgba(225, 29, 72, 0.24);
+        }
+
+        .table-card.table-reservada {
+            background: #fef3c7;
+            border-color: #f59e0b;
+            box-shadow: 0 8px 18px rgba(245, 158, 11, 0.24);
+        }
+
+        .table-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 9px 20px rgba(17, 24, 39, 0.14);
+            border-color: #ef3500;
+        }
+
+        .table-number {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+
+        .table-meta {
+            color: #4b5563;
+            font-size: 11px;
+            line-height: 1.35;
+        }
+
+        .table-status {
+            border-radius: 999px;
+            padding: 3px 8px;
+            margin-bottom: 7px;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .table-libre .table-status {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .table-ocupada .table-status {
+            background: #fecdd3;
+            color: #9f1239;
+        }
+
+        .table-reservada .table-status {
+            background: #fde68a;
+            color: #92400e;
+        }
+
+        .table-owner {
+            width: 100%;
+            color: #111827;
+            font-size: 12px;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-top: 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .empty-state {
+            padding: 36px;
+            text-align: center;
+            color: #6b7280;
+            border: 1px dashed #d1d5db;
+            border-radius: 10px;
+            background: #fafafa;
+        }
+
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(17, 24, 39, 0.48);
+            z-index: 20;
+            align-items: center;
+            justify-content: center;
+            padding: 22px;
+        }
+
+        .modal-backdrop.active {
+            display: flex;
+        }
+
+        .order-modal {
+            width: min(940px, 100%);
+            max-height: calc(100vh - 44px);
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            background: linear-gradient(90deg, #e60012, #f0440b);
+            color: white;
+            padding: 20px 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-header h3 {
+            font-size: 22px;
+        }
+
+        .close-btn {
+            border: 0;
+            background: transparent;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            padding: 22px;
+            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .field label {
+            display: block;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .field input {
+            width: 100%;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 13px;
+            font-size: 14px;
+        }
+
+        .category-tabs {
+            display: flex;
+            gap: 9px;
+            margin: 22px 0 18px;
+            flex-wrap: wrap;
+        }
+
+        .category-tabs button {
+            border: 0;
+            border-radius: 8px;
+            background: #f3f4f6;
+            padding: 11px 16px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .category-tabs button.active {
+            background: #e60012;
+            color: white;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .product-card {
+            border: 1px solid #e5e7eb;
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .product-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        .product-photo {
+            width: 58px;
+            height: 58px;
+            border-radius: 8px;
+            object-fit: cover;
+            background: #fee2e2;
+            flex-shrink: 0;
+            border: 1px solid #e5e7eb;
+        }
+
+        .product-card strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .product-card span {
+            color: #e60012;
+            font-size: 13px;
+        }
+
+        .add-btn {
+            border: 0;
+            border-radius: 8px;
+            background: #e60012;
+            color: white;
+            padding: 10px 14px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .order-section-title {
+            font-size: 16px;
+            margin: 22px 0 12px;
+        }
+
+        .current-orders {
+            display: grid;
+            gap: 12px;
+        }
+
+        .current-order-card {
+            border: 1px solid #dbe1ea;
+            border-radius: 8px;
+            background: #f9fafb;
+            padding: 14px;
+        }
+
+        .current-order-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 4px;
+            padding: 5px 9px;
+            background: #e8f0fe;
+            color: #1d4ed8;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .delete-order-btn,
+        .qty-btn {
+            border: 0;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .delete-order-btn {
+            color: #e60012;
+            background: transparent;
+            width: 30px;
+            height: 30px;
+        }
+
+        .current-order-lines {
+            display: grid;
+            gap: 4px;
+            font-size: 13px;
+            color: #1f2937;
+            min-height: 52px;
+        }
+
+        .current-order-total {
+            text-align: right;
+            color: #e60012;
+            font-weight: 800;
+            margin: 10px 0 12px;
+        }
+
+        .order-status-actions {
+            display: block;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 10px;
+        }
+
+        .status-action {
+            width: 100%;
+            border: 0;
+            border-radius: 5px;
+            padding: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .status-ready {
+            background: #d1fae5;
+            color: #047857;
+        }
+
+        .status-action.active {
+            box-shadow: inset 0 0 0 2px currentColor;
+        }
+
+        .product-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .qty-controls {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .qty-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: #ffe1e1;
+            color: #e60012;
+            font-weight: 800;
+        }
+
+        .qty-btn.plus {
+            background: #e60012;
+            color: white;
+        }
+
+        .qty-value {
+            min-width: 18px;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .order-summary {
+            display: none;
+            border: 1px solid #fed7aa;
+            border-radius: 8px;
+            background: #fff7ed;
+            padding: 14px;
+            margin-top: 20px;
+        }
+
+        .order-summary.active {
+            display: block;
+        }
+
+        .summary-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+
+        .summary-title i {
+            color: #f0440b;
+        }
+
+        .summary-lines {
+            display: grid;
+            gap: 8px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #fdba74;
+        }
+
+        .summary-line,
+        .summary-total {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 13px;
+        }
+
+        .summary-total {
+            align-items: center;
+            padding-top: 12px;
+            font-size: 16px;
+        }
+
+        .summary-total strong {
+            color: #e60012;
+            font-size: 20px;
+        }
+
+        .modal-footer {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 20px 22px;
+            border-top: 1px solid #e5e7eb;
+            background: #f9fafb;
+        }
+
+        .footer-btn {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            background: white;
+        }
+
+        .save-order {
+            border-color: transparent;
+            background: #f97316;
+            color: white;
+        }
+
+        @media (max-width: 760px) {
+            .topbar {
+                padding: 14px 18px;
+                align-items: flex-start;
+                gap: 12px;
+                flex-direction: column;
+            }
+
+            .page {
+                width: calc(100% - 28px);
+                margin: 20px auto;
+            }
+
+            .page-header {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .tables-grid,
+            .product-grid,
+            .modal-footer {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <div class="brand">
+            <i class="fas fa-hat-chef"></i>
+            <div>
+                <h1>Panel de Mesero</h1>
+                <span>Gestión de Mesas y Pedidos</span>
+            </div>
+        </div>
+        <div class="topbar-actions">
+            <span><i class="fas fa-circle-user"></i> {{ user.first_name|default:user.username }}</span>
+            <a class="logout-btn" href="{% url 'logout' %}">
+                <i class="fas fa-arrow-right-from-bracket"></i> Salir
+            </a>
+        </div>
+    </header>
+
+    <main class="page">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="empty-state" style="margin-bottom: 18px;">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <section class="page-header">
+            <div>
+                <h2>Mesas del Restaurante</h2>
+                <p>Seleccione una zona y luego una mesa para tomar el pedido.</p>
+            </div>
+            <div class="zone-tabs" role="tablist">
+                {% for zona in zonas %}
+                <button class="zone-tab {% if forloop.first %}active{% endif %}" type="button" onclick="showZone('{{ zona.id }}')" id="tab-{{ zona.id }}">
+                    <span class="zone-dot" style="background: {{ zona.color }}"></span>
+                    {{ zona.nombre }}
+                </button>
+                {% empty %}
+                <button class="zone-tab active" type="button">Sin zonas</button>
+                {% endfor %}
+            </div>
+        </section>
+
+        {% for zona in zonas %}
+        <section class="zone-panel {% if forloop.first %}active{% endif %}" id="zone-{{ zona.id }}">
+            <div class="zone-title">
+                <div>
+                    <h3>{{ zona.nombre }}</h3>
+                    <span>{{ zona.mesas_set.count }} mesas disponibles para pedido</span>
+                </div>
+            </div>
+
+            <div class="zone-layout shape-{{ zona.shape }}" style="--zone-color: {{ zona.color }};" data-zona-id="{{ zona.id }}">
+                <div class="zone-layout-name">{{ zona.nombre }}</div>
+                {% for mesa in zona.mesas_set.all %}
+                <button class="table-card {% if mesa.has_active_order %}table-ocupada{% else %}table-{{ mesa.estado_mesa }}{% endif %}" type="button" data-mesa-numero="{{ mesa.numero }}" onclick="openOrderModal('{{ mesa.numero }}', '{{ zona.nombre|escapejs }}')">
+                    <div class="table-status">{% if mesa.has_active_order %}Ocupada{% else %}{{ mesa.get_estado_mesa_display }}{% endif %}</div>
+                    <div class="table-number">Mesa {{ mesa.numero }}</div>
+                    <div class="table-meta">
+                        Capacidad: {{ mesa.capacidad }} personas
+                    </div>
+                    {% if mesa.has_active_order %}
+                    <div class="table-owner">{{ mesa.titular_ocupada|default:"Cliente" }}</div>
+                    {% elif mesa.estado_mesa == 'reservada' %}
+                    <div class="table-owner">{{ mesa.ubicacion|default:"Reservada" }}</div>
+                    {% endif %}
+                </button>
+                {% empty %}
+                <div class="empty-state">Esta zona todavía no tiene mesas.</div>
+                {% endfor %}
+            </div>
+        </section>
+        {% empty %}
+        <section class="zone-panel active">
+            <div class="empty-state">No hay zonas creadas para mostrar mesas.</div>
+        </section>
+        {% endfor %}
+    </main>
+
+    <div class="modal-backdrop" id="orderModal">
+        <div class="order-modal">
+            <div class="modal-header">
+                <div>
+                    <h3 id="modalMesaTitle">Mesa</h3>
+                    <p id="modalZonaTitle">Gestión de Pedido</p>
+                </div>
+                <button class="close-btn" type="button" onclick="closeOrderModal()">×</button>
+            </div>
+
+            <div class="modal-body">
+                <div class="field">
+                    <label>Nombre del Cliente</label>
+                    <input type="text" id="customerName" placeholder="Ingrese el nombre del cliente" oninput="updateSaveButtonState()">
+                </div>
+
+                <div id="currentOrdersSection">
+                    <h4 class="order-section-title">Pedidos Actuales</h4>
+                    <div class="current-orders" id="currentOrders"></div>
+                </div>
+
+                <h4 class="order-section-title">Agregar Nuevo Pedido</h4>
+                <div class="category-tabs">
+                    {% for categoria in categorias %}
+                    <button class="{% if forloop.first %}active{% endif %}" type="button" data-category="{{ categoria.nombre|escapejs }}" onclick="setCategory('{{ categoria.nombre|escapejs }}')">{{ categoria.nombre }}</button>
+                    {% empty %}
+                    <button class="active" type="button">Sin productos</button>
+                    {% endfor %}
+                </div>
+
+                <div class="product-grid" id="productGrid">
+                    <div class="product-card">
+                        <div><strong>Ensalada César</strong><span>$8.500</span></div>
+                        <button class="add-btn" type="button">+ Agregar</button>
+                    </div>
+                    <div class="product-card">
+                        <div><strong>Sopa del Día</strong><span>$6.000</span></div>
+                        <button class="add-btn" type="button">+ Agregar</button>
+                    </div>
+                    <div class="product-card">
+                        <div><strong>Bruschetta</strong><span>$7.000</span></div>
+                        <button class="add-btn" type="button">+ Agregar</button>
+                    </div>
+                    <div class="product-card">
+                        <div><strong>Alitas de Pollo</strong><span>$9.500</span></div>
+                        <button class="add-btn" type="button">+ Agregar</button>
+                    </div>
+                </div>
+
+                <div class="order-summary" id="orderSummary">
+                    <div class="summary-title">
+                        <i class="fas fa-cart-shopping"></i>
+                        Resumen del Pedido
+                    </div>
+                    <div class="summary-lines" id="summaryLines"></div>
+                    <div class="summary-total">
+                        <span>Total:</span>
+                        <strong id="summaryTotal">$0</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="footer-btn" type="button" onclick="closeOrderModal()">Cancelar</button>
+                <button class="footer-btn save-order" type="button" id="saveOrderBtn" onclick="saveOrder()">
+                    <i class="fas fa-save"></i> Guardar Pedido
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const zonasData = [
+            {% for zona in zonas %}
+            {
+                id: {{ zona.id }},
+                x: {{ zona.x }},
+                y: {{ zona.y }},
+                width: {{ zona.width }},
+                height: {{ zona.height }},
+                shape: '{{ zona.shape }}'
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+
+        const mesasData = [
+            {% for mesa in mesas %}
+            {
+                id: {{ mesa.id }},
+                numero: {{ mesa.numero }},
+                zonaId: {{ mesa.zona_id|default:"null" }},
+                x: {{ mesa.x }},
+                y: {{ mesa.y }},
+                width: {{ mesa.width }},
+                height: {{ mesa.height }},
+                estado: '{% if mesa.has_active_order %}ocupada{% else %}{{ mesa.estado_mesa }}{% endif %}',
+                estadoBase: '{{ mesa.estado_mesa }}',
+                titular: '{% if mesa.has_active_order %}{{ mesa.titular_ocupada|default:"Cliente"|escapejs }}{% elif mesa.estado_mesa == "reservada" %}{{ mesa.ubicacion|default:"Reservada"|escapejs }}{% endif %}'
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+
+        const productData = {{ productos_menu_json|safe }};
+        const currentOrdersByMesa = {{ pedidos_por_mesa_json|safe }};
+        let currentMesaNumero = null;
+        let currentCategory = productData[0]?.categoria || '';
+        let draftItems = {};
+
+        function formatCurrency(value) {
+            return `$${Number(value || 0).toLocaleString('es-CO', { maximumFractionDigits: 0 })}`;
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, char => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            }[char]));
+        }
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            return parts.length === 2 ? parts.pop().split(';').shift() : '';
+        }
+
+        function setCategory(category) {
+            currentCategory = category;
+            document.querySelectorAll('.category-tabs button').forEach(button => {
+                button.classList.toggle('active', button.dataset.category === category);
+            });
+            renderProducts();
+        }
+
+        function renderProducts() {
+            const grid = document.getElementById('productGrid');
+            const products = productData.filter(product => product.categoria === currentCategory);
+
+            if (!products.length) {
+                grid.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;">No hay productos disponibles en esta categoria.</div>';
+                return;
+            }
+
+            grid.innerHTML = products.map(product => {
+                const quantity = draftItems[product.id]?.cantidad || 0;
+                const controls = quantity > 0
+                    ? `<div class="qty-controls">
+                        <button class="qty-btn" type="button" onclick="changeQuantity(${product.id}, -1)">-</button>
+                        <span class="qty-value">${quantity}</span>
+                        <button class="qty-btn plus" type="button" onclick="changeQuantity(${product.id}, 1)">+</button>
+                        <button class="delete-order-btn" type="button" onclick="removeDraftItem(${product.id})"><i class="fas fa-trash"></i></button>
+                    </div>`
+                    : `<button class="add-btn" type="button" onclick="changeQuantity(${product.id}, 1)">+ Agregar</button>`;
+
+                const image = product.imagen_url
+                    ? `<img class="product-photo" src="${escapeHtml(product.imagen_url)}" alt="${escapeHtml(product.nombre)}">`
+                    : `<div class="product-photo" aria-hidden="true"></div>`;
+
+                return `<div class="product-card">
+                    <div class="product-info">
+                        ${image}
+                        <div>
+                            <strong>${escapeHtml(product.nombre)}</strong>
+                            <span>${product.precio_display}</span>
+                        </div>
+                    </div>
+                    <div class="product-actions">${controls}</div>
+                </div>`;
+            }).join('');
+        }
+
+        function changeQuantity(productId, delta) {
+            const product = productData.find(item => item.id === productId);
+            if (!product) return;
+
+            const current = draftItems[productId]?.cantidad || 0;
+            const next = Math.max(0, current + delta);
+            if (next === 0) {
+                delete draftItems[productId];
+            } else {
+                draftItems[productId] = { ...product, cantidad: next };
+            }
+
+            renderProducts();
+            renderSummary();
+        }
+
+        function removeDraftItem(productId) {
+            delete draftItems[productId];
+            renderProducts();
+            renderSummary();
+        }
+
+        function renderSummary() {
+            const summary = document.getElementById('orderSummary');
+            const lines = document.getElementById('summaryLines');
+            const totalElement = document.getElementById('summaryTotal');
+            const items = Object.values(draftItems);
+
+            if (!items.length) {
+                summary.classList.remove('active');
+                lines.innerHTML = '';
+                totalElement.textContent = '$0';
+                updateSaveButtonState();
+                return;
+            }
+
+            const total = items.reduce((sum, item) => sum + item.precio * item.cantidad, 0);
+            lines.innerHTML = items.map(item => `<div class="summary-line">
+                <span>${item.cantidad}x ${escapeHtml(item.nombre)}</span>
+                <span>${formatCurrency(item.precio * item.cantidad)}</span>
+            </div>`).join('');
+            totalElement.textContent = formatCurrency(total);
+            summary.classList.add('active');
+            updateSaveButtonState();
+        }
+
+        function updateSaveButtonState() {
+            const customerName = document.getElementById('customerName').value.trim();
+            const hasItems = Object.keys(draftItems).length > 0;
+            document.getElementById('saveOrderBtn').disabled = !customerName || !hasItems;
+        }
+
+        function renderCurrentOrders() {
+            const section = document.getElementById('currentOrdersSection');
+            const container = document.getElementById('currentOrders');
+            const orders = currentOrdersByMesa[String(currentMesaNumero)] || [];
+
+            if (!orders.length) {
+                section.style.display = 'none';
+                container.innerHTML = '';
+                return;
+            }
+
+            section.style.display = 'block';
+            container.innerHTML = orders.map(order => `<div class="current-order-card">
+                <div class="current-order-top">
+                    <div>
+                        <span class="status-pill">${escapeHtml(order.estado_display)}</span>
+                        <span style="font-size: 12px; color: #6b7280; margin-left: 8px;">${escapeHtml(order.hora)}</span>
+                    </div>
+                    <button class="delete-order-btn" type="button" onclick="deleteOrder(${order.numero})"><i class="fas fa-trash"></i></button>
+                </div>
+                <div class="current-order-lines">
+                    ${order.detalles.map(item => `<span>${item.cantidad}x ${escapeHtml(item.producto)}</span>`).join('')}
+                </div>
+                <div class="current-order-total">Total: ${order.total_display}</div>
+                <div class="order-status-actions">
+                    <button class="status-action status-ready ${order.estado === 'listo' ? 'active' : ''}" type="button" onclick="updateOrderStatus(${order.numero}, 'listo')">
+                        <i class="fas fa-check-circle"></i> Listo para Servir
+                    </button>
+                </div>
+            </div>`).join('');
+        }
+
+        function tableStateLabel(estado) {
+            return {
+                libre: 'Libre',
+                ocupada: 'Ocupada',
+                reservada: 'Reservada'
+            }[estado] || 'Libre';
+        }
+
+        function setMesaVisualState(mesaNumero, estado, titular = '') {
+            const mesa = mesasData.find(item => item.numero === Number(mesaNumero));
+            if (mesa) {
+                mesa.estado = estado;
+                mesa.titular = titular;
+            }
+
+            document.querySelectorAll(`.table-card[data-mesa-numero="${mesaNumero}"]`).forEach(card => {
+                card.classList.remove('table-libre', 'table-ocupada', 'table-reservada');
+                card.classList.add(`table-${estado}`);
+
+                let status = card.querySelector('.table-status');
+                if (!status) {
+                    status = document.createElement('div');
+                    status.className = 'table-status';
+                    card.prepend(status);
+                }
+                status.textContent = tableStateLabel(estado);
+
+                let owner = card.querySelector('.table-owner');
+                if (estado === 'ocupada' || estado === 'reservada') {
+                    if (!owner) {
+                        owner = document.createElement('div');
+                        owner.className = 'table-owner';
+                        card.appendChild(owner);
+                    }
+                    owner.textContent = titular || (estado === 'reservada' ? 'Reservada' : 'Cliente');
+                } else if (owner) {
+                    owner.remove();
+                }
+            });
+        }
+
+        function syncMesaVisualFromOrders(mesaNumero) {
+            const key = String(mesaNumero);
+            const orders = currentOrdersByMesa[key] || [];
+            const mesa = mesasData.find(item => item.numero === Number(mesaNumero));
+            if (orders.length) {
+                setMesaVisualState(mesaNumero, 'ocupada', orders[0].cliente || 'Cliente');
+                return;
+            }
+
+            const fallbackEstado = mesa?.estadoBase === 'reservada' ? 'reservada' : 'libre';
+            const fallbackTitular = fallbackEstado === 'reservada' ? mesa?.titular : '';
+            setMesaVisualState(mesaNumero, fallbackEstado, fallbackTitular);
+        }
+
+        function applyInitialTableStates() {
+            mesasData.forEach(mesa => setMesaVisualState(mesa.numero, mesa.estado, mesa.titular));
+        }
+
+        async function saveOrder() {
+            const items = Object.values(draftItems).map(item => ({
+                producto_id: item.id,
+                cantidad: item.cantidad
+            }));
+            if (!items.length) {
+                alert('Agrega al menos un producto al pedido.');
+                return;
+            }
+            if (!document.getElementById('customerName').value.trim()) {
+                alert('Ingresa el nombre del cliente.');
+                return;
+            }
+
+            const button = document.getElementById('saveOrderBtn');
+            button.disabled = true;
+
+            try {
+                const response = await fetch("{% url 'guardar_pedido' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        mesa_numero: currentMesaNumero,
+                        cliente: document.getElementById('customerName').value,
+                        items
+                    })
+                });
+                const data = await response.json();
+                if (!data.success) throw new Error(data.error || 'No se pudo guardar el pedido.');
+
+                const key = String(currentMesaNumero);
+                currentOrdersByMesa[key] = currentOrdersByMesa[key] || [];
+                currentOrdersByMesa[key].unshift(data.pedido);
+                draftItems = {};
+                renderProducts();
+                renderSummary();
+                renderCurrentOrders();
+                syncMesaVisualFromOrders(currentMesaNumero);
+            } catch (error) {
+                alert(error.message);
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        async function updateOrderStatus(numero, estado) {
+            const response = await fetch(`/pedidos/${numero}/estado/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ estado })
+            });
+            const data = await response.json();
+            if (!data.success) {
+                alert(data.error || 'No se pudo actualizar el pedido.');
+                return;
+            }
+
+            const key = String(currentMesaNumero);
+            currentOrdersByMesa[key] = (currentOrdersByMesa[key] || []).map(order => order.numero === numero ? data.pedido : order);
+            renderCurrentOrders();
+            syncMesaVisualFromOrders(currentMesaNumero);
+        }
+
+        async function deleteOrder(numero) {
+            if (!confirm('¿Estás seguro de que deseas eliminar este pedido?')) return;
+
+            const response = await fetch(`/pedidos/${numero}/eliminar/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCookie('csrftoken') }
+            });
+            const data = await response.json();
+            if (!data.success) {
+                alert(data.error || 'No se pudo eliminar el pedido.');
+                return;
+            }
+
+            const key = String(currentMesaNumero);
+            currentOrdersByMesa[key] = (currentOrdersByMesa[key] || []).filter(order => order.numero !== numero);
+            renderCurrentOrders();
+            syncMesaVisualFromOrders(currentMesaNumero);
+        }
+
+        function showZone(zonaId) {
+            document.querySelectorAll('.zone-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.zone-panel').forEach(panel => panel.classList.remove('active'));
+
+            document.getElementById(`tab-${zonaId}`)?.classList.add('active');
+            document.getElementById(`zone-${zonaId}`)?.classList.add('active');
+            requestAnimationFrame(layoutTables);
+        }
+
+        function openOrderModal(mesaNumero, zonaNombre) {
+            currentMesaNumero = mesaNumero;
+            draftItems = {};
+            document.getElementById('modalMesaTitle').textContent = `Mesa ${mesaNumero}`;
+            document.getElementById('modalZonaTitle').textContent = zonaNombre;
+            document.getElementById('customerName').value = '';
+            renderCurrentOrders();
+            renderProducts();
+            renderSummary();
+            updateSaveButtonState();
+            document.getElementById('orderModal').classList.add('active');
+        }
+
+        function closeOrderModal() {
+            document.getElementById('orderModal').classList.remove('active');
+            draftItems = {};
+            renderSummary();
+        }
+
+        function clamp(value, min, max) {
+            return Math.min(Math.max(value, min), max);
+        }
+
+        function fallbackGridPosition(index, total, layout, tableSize) {
+            const columns = Math.max(1, Math.ceil(Math.sqrt(total)));
+            const rows = Math.max(1, Math.ceil(total / columns));
+            const col = index % columns;
+            const row = Math.floor(index / columns);
+            return {
+                x: ((col + 0.5) / columns) * layout.clientWidth - tableSize / 2,
+                y: ((row + 0.5) / rows) * layout.clientHeight - tableSize / 2
+            };
+        }
+
+        function sizeZoneLayout(layout, zona) {
+            const panel = layout.closest('.zone-panel');
+            const availableWidth = Math.max(320, panel.clientWidth - 48);
+            const maxHeight = Math.min(860, Math.max(620, window.innerHeight - 160));
+            const ratio = Math.max(0.35, Math.min(2.8, (zona.width || 200) / (zona.height || 150)));
+            const widthFromHeight = maxHeight * ratio;
+            const width = Math.min(availableWidth, widthFromHeight);
+            const height = Math.max(520, Math.min(maxHeight, width / ratio));
+
+            layout.style.width = `${Math.round(width)}px`;
+            layout.style.height = `${Math.round(height)}px`;
+        }
+
+        function layoutTables() {
+            document.querySelectorAll('.zone-panel').forEach(panel => {
+                const zonaId = Number(panel.id.replace('zone-', ''));
+                const zona = zonasData.find(item => item.id === zonaId);
+                const layout = panel.querySelector('.zone-layout');
+                const cards = Array.from(panel.querySelectorAll('.table-card'));
+                if (!zona || !layout || cards.length === 0) return;
+
+                sizeZoneLayout(layout, zona);
+
+                const padding = 34;
+                const tableSize = cards[0].offsetWidth || 132;
+                const availableWidth = Math.max(1, layout.clientWidth - padding * 2);
+                const availableHeight = Math.max(1, layout.clientHeight - padding * 2);
+                const zoneWidth = Math.max(1, zona.width || 200);
+                const zoneHeight = Math.max(1, zona.height || 150);
+                const scale = Math.min(availableWidth / zoneWidth, availableHeight / zoneHeight);
+                const drawnWidth = zoneWidth * scale;
+                const drawnHeight = zoneHeight * scale;
+                const offsetX = (layout.clientWidth - drawnWidth) / 2;
+                const offsetY = (layout.clientHeight - drawnHeight) / 2;
+
+                layout.style.backgroundSize = `${drawnWidth}px ${drawnHeight}px`;
+                layout.style.backgroundPosition = `${offsetX}px ${offsetY}px`;
+
+                cards.forEach((card, index) => {
+                    const mesaNumero = Number(card.dataset.mesaNumero);
+                    const mesa = mesasData.find(item => item.numero === mesaNumero && item.zonaId === zonaId);
+                    let position = null;
+
+                    if (mesa) {
+                        const centerX = mesa.x + (mesa.width || tableSize) / 2;
+                        const centerY = mesa.y + (mesa.height || tableSize) / 2;
+                        const insideZone =
+                            centerX >= zona.x &&
+                            centerX <= zona.x + zona.width &&
+                            centerY >= zona.y &&
+                            centerY <= zona.y + zona.height;
+
+                        if (insideZone) {
+                            position = {
+                                x: offsetX + ((centerX - zona.x) / zoneWidth) * drawnWidth - tableSize / 2,
+                                y: offsetY + ((centerY - zona.y) / zoneHeight) * drawnHeight - tableSize / 2
+                            };
+                        }
+                    }
+
+                    if (!position) {
+                        position = fallbackGridPosition(index, cards.length, layout, tableSize);
+                    }
+
+                    card.style.left = `${clamp(position.x, 12, layout.clientWidth - tableSize - 12)}px`;
+                    card.style.top = `${clamp(position.y, 66, layout.clientHeight - tableSize - 12)}px`;
+                });
+            });
+        }
+
+        window.addEventListener('load', () => {
+            renderProducts();
+            applyInitialTableStates();
+            layoutTables();
+        });
+        window.addEventListener('resize', layoutTables);
+    </script>
+</body>
+</html>

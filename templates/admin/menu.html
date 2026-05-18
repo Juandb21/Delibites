@@ -1,0 +1,114 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="content-section">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 class="section-title" style="margin: 0;">Menú del Restaurante</h2>
+        <a href="{% url 'admin_producto_crear' %}" style="background-color: #E63946; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+            <i class="fas fa-plus"></i> Nuevo Producto
+        </a>
+    </div>
+
+    {% for categoria in categorias %}
+    <div style="margin-bottom: 25px;">
+        <h3 style="color: #333; margin-bottom: 15px; font-size: 16px; border-bottom: 2px solid #E63946; padding-bottom: 10px;">
+            {{ categoria.nombre }}
+        </h3>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+            {% for producto in categoria.producto_set.all %}
+            <div style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: transform 0.3s;">
+                {% if producto.imagen %}
+                <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" style="width: 100%; height: 200px; object-fit: cover;">
+                {% else %}
+                <div style="width: 100%; height: 200px; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #999;">
+                    <i class="fas fa-image" style="font-size: 48px;"></i>
+                </div>
+                {% endif %}
+                
+                <div style="padding: 15px;">
+                    <h4 style="margin: 0 0 10px 0; color: #333;">{{ producto.nombre }}</h4>
+                    <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">{{ producto.descripcion|truncatewords:15 }}</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <span style="color: #E63946; font-weight: 600; font-size: 18px;">{{ producto.precio_display }} COP</span>
+                        <span style="background-color: {% if producto.disponible %}#28a745{% else %}#dc3545{% endif %}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+                            {% if producto.disponible %}Disponible{% else %}No Disponible{% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="admin-actions">
+                        <a href="{% url 'admin_producto_editar' producto.id %}" class="admin-action-button admin-action-edit">
+                            <i class="fas fa-edit"></i> Editar
+                        </a>
+                        <form method="POST" action="{% url 'admin_producto_eliminar' producto.id %}" style="flex: 1; margin: 0;" onsubmit="return confirm('¿Estás seguro de que deseas eliminar este producto?');">
+                            {% csrf_token %}
+                            <button type="submit" class="admin-action-button admin-action-delete">
+                                <i class="fas fa-trash"></i> Eliminar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: #999;">
+                No hay productos en esta categoría
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% empty %}
+    <div style="padding: 20px; text-align: center; color: #999;">
+        No hay categorías de productos
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+    .admin-actions {
+        display: flex;
+        gap: 10px;
+        border-top: 1px solid #eee;
+        padding-top: 12px;
+    }
+
+    .admin-actions > a,
+    .admin-actions > form {
+        flex: 1;
+    }
+
+    .admin-action-button {
+        width: 100%;
+        height: 36px;
+        box-sizing: border-box;
+        border: none;
+        border-radius: 4px;
+        color: white;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        padding: 0 8px;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1;
+        text-decoration: none;
+        transition: background-color 0.3s;
+    }
+
+    .admin-action-edit {
+        background-color: #007bff;
+    }
+
+    .admin-action-delete {
+        background-color: #E63946;
+    }
+
+    @media (max-width: 768px) {
+        .content-section > div > div:nth-child(2) {
+            grid-template-columns: 1fr !important;
+        }
+    }
+</style>
+{% endblock %}

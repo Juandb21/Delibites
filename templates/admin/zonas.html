@@ -1,0 +1,944 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+
+<style>
+    .zonas-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        gap: 15px;
+    }
+
+    .section-title {
+        margin: 0;
+        font-size: 28px;
+        color: #1a1a1a;
+    }
+
+    .header-buttons {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn-primary {
+        background-color: #5B6EFF;
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: background-color 0.3s;
+    }
+
+    .btn-primary:hover {
+        background-color: #4A5CE8;
+    }
+
+    .btn-save {
+        background-color: #E63946;
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: background-color 0.3s;
+    }
+
+    .btn-save:hover {
+        background-color: #D62828;
+    }
+
+    .zonas-container {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+
+    .zonas-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .zonas-list-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 15px;
+    }
+
+    .zona-card {
+        background: white;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 15px;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .zona-card:hover {
+        border-color: #5B6EFF;
+        box-shadow: 0 4px 12px rgba(91, 110, 255, 0.2);
+    }
+
+    .zona-card.active {
+        border-color: #5B6EFF;
+        background-color: #f0f3ff;
+    }
+
+    .zona-color {
+        width: 30px;
+        height: 30px;
+        border-radius: 6px;
+        border: 2px solid #ddd;
+        flex-shrink: 0;
+    }
+
+    .zona-info {
+        flex: 1;
+    }
+
+    .zona-name {
+        font-weight: 600;
+        color: #1a1a1a;
+        font-size: 15px;
+    }
+
+    .zona-tables {
+        font-size: 12px;
+        color: #666;
+        margin-top: 4px;
+    }
+
+    .zona-actions {
+        display: flex;
+        gap: 6px;
+        flex-shrink: 0;
+    }
+
+    .btn-zone-action {
+        background: none;
+        border: none;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        cursor: pointer;
+        color: #666;
+        transition: all 0.3s;
+        padding: 0;
+    }
+
+    .btn-zone-action:hover {
+        background-color: #f0f0f0;
+        color: #1a1a1a;
+    }
+
+    .btn-zone-action.delete:hover {
+        background-color: #ffebee;
+        color: #E63946;
+    }
+
+    .btn-zone-action.locked {
+        background-color: #f0f3ff;
+        color: #5B6EFF;
+    }
+
+    .canvas-wrapper {
+        background: #fafafa;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 20px;
+        position: relative;
+    }
+
+    #canvas {
+        border: 2px dashed #d0d0d0;
+        background: white;
+        border-radius: 4px;
+        cursor: move;
+        display: block;
+        margin: 0 auto;
+    }
+
+    .canvas-label {
+        font-size: 13px;
+        color: #888;
+        margin-bottom: 12px;
+        text-align: center;
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal.show {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-content {
+        background-color: white;
+        padding: 30px;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 400px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-title {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 20px;
+        color: #1a1a1a;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #333;
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+
+    .form-group input[type="color"] {
+        height: 40px;
+        cursor: pointer;
+    }
+
+    .modal-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .modal-buttons button {
+        flex: 1;
+        padding: 10px;
+        border: none;
+        border-radius: 4px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    .btn-cancel {
+        background-color: #e0e0e0;
+        color: #333;
+    }
+
+    .btn-cancel:hover {
+        background-color: #d0d0d0;
+    }
+
+    .btn-accept {
+        background-color: #5B6EFF;
+        color: white;
+    }
+
+    .btn-accept:hover {
+        background-color: #4A5CE8;
+    }
+
+    @media (max-width: 1024px) {
+        .zonas-container {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="content-section">
+    {% csrf_token %}
+    <div class="zonas-header">
+        <h2 class="section-title">Editor de Zonas</h2>
+        <div class="header-buttons">
+            <button class="btn-primary" onclick="openNewZonaModal()">
+                <i class="fas fa-plus"></i> Nueva Zona
+            </button>
+            <button class="btn-save" onclick="saveChanges()">
+                <i class="fas fa-save"></i> Guardar Cambios
+            </button>
+        </div>
+    </div>
+
+    <div class="zonas-container">
+        <div>
+            <div class="zonas-list-title">Zonas Existentes</div>
+            <div class="zonas-list" id="zonasList">
+                {% for zona in zonas %}
+                <div class="zona-card">
+                    <div class="zona-color" style="background-color: {{ zona.color }}"></div>
+                    <div class="zona-info">
+                        <div class="zona-name">{{ zona.nombre }}</div>
+                        <div class="zona-tables">{{ zona.mesas_set.count }} mesas</div>
+                    </div>
+                    <div class="zona-actions">
+                        <button class="btn-zone-action" type="button">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-zone-action delete" type="button">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="zona-card">
+                    <div class="zona-info">
+                        <div class="zona-name">No hay zonas creadas</div>
+                        <div class="zona-tables">Usa Nueva Zona para crear la primera.</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div>
+            <div class="canvas-label">Crea y edita las zonas del restaurante con formas personalizadas</div>
+            <div class="canvas-wrapper">
+                <canvas id="canvas" width="800" height="500"></canvas>
+            </div>
+            <div class="canvas-label" style="margin-top: 12px; color: #999;">Selecciona una zona para editar o crea una nueva haciendo clic en el botón "Nueva Zona"</div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Nueva Zona -->
+<div id="zonaModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-title" id="modalTitle">Nueva Zona</div>
+        <div class="form-group">
+            <label for="zonaName">Nombre de la Zona</label>
+            <input type="text" id="zonaName" placeholder="Ej: Salón Principal">
+        </div>
+        <div class="form-group">
+            <label for="zonaShape">Forma</label>
+            <select id="zonaShape" style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                <option value="rectangle">Rectángulo</option>
+                <option value="l-shape">Forma de L</option>
+                <option value="triangle">Triángulo</option>
+                <option value="hexagon">Hexágono</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="zonaColor">Color</label>
+            <input type="color" id="zonaColor" value="#FF6B6B">
+        </div>
+        <div class="modal-buttons">
+            <button class="btn-cancel" onclick="closeZonaModal()">Cancelar</button>
+            <button class="btn-accept" onclick="createZona()">Crear</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Script de inicialización global
+window.canvas = null;
+
+// Parsear y asignar zonas - con error handling
+try {
+    const jsonStr = '{{ zonas_json|safe }}';
+    console.log('JSON string length:', jsonStr.length);
+    console.log('First 100 chars:', jsonStr.substring(0, 100));
+    
+    if (jsonStr && jsonStr.trim() !== '') {
+        window.zonas = JSON.parse(jsonStr);
+        console.log('✓ Zonas cargadas correctamente:', window.zonas.length, 'zonas');
+    } else {
+        console.warn('⚠ JSON string vacío');
+        window.zonas = [];
+    }
+} catch (error) {
+    console.error('✗ Error al parsear zonas:', error);
+    window.zonas = [];
+}
+
+try {
+    const savedLocks = JSON.parse(localStorage.getItem('zonaLocks') || '{}');
+    window.zonas = window.zonas.map(zona => ({
+        ...zona,
+        shape: zona.shape === 'u-shape' ? 'rectangle' : zona.shape,
+        locked: Boolean(savedLocks[zona.id])
+    }));
+} catch (error) {
+    console.warn('No se pudieron cargar los bloqueos de zonas:', error);
+}
+
+let selectedZona = null;
+let isEditingZona = null;
+let tempZonaId = -1;
+
+function applyLockState(fabricObject, zona) {
+    const locked = Boolean(zona.locked);
+    fabricObject.set({
+        lockMovementX: locked,
+        lockMovementY: locked,
+        lockScalingX: locked,
+        lockScalingY: locked,
+        lockRotation: true,
+        hasControls: !locked,
+        hasBorders: true,
+        cornerStyle: 'circle',
+        cornerSize: 10,
+        transparentCorners: false,
+        selectable: true,
+        opacity: locked ? 0.78 : 0.7
+    });
+    fabricObject.setControlsVisibility({ mtr: false });
+}
+
+
+// Función para inicializar
+function initializeCanvas() {
+    // Verificar que fabric.js esté disponible
+    if (typeof fabric === 'undefined') {
+        console.log('fabric.js no está disponible, reintentando en 100ms...');
+        setTimeout(initializeCanvas, 100);
+        return;
+    }
+
+    try {
+        window.canvas = new fabric.Canvas('canvas', {
+            backgroundColor: 'white',
+            width: 800,
+            height: 500
+        });
+
+        console.log('Canvas inicializado correctamente', window.canvas);
+
+        // Cargar zonas en el canvas
+        loadZonasOnCanvas();
+        renderZonasList();
+
+        window.canvas.on('object:modified', function(e) {
+            if (e.target && e.target.zona) {
+                const shape = e.target;
+                const scaleX = shape.scaleX || 1;
+                const scaleY = shape.scaleY || 1;
+                const wasResized = Math.abs(scaleX - 1) > 0.001 || Math.abs(scaleY - 1) > 0.001;
+                // Actualizar datos de la zona seleccionada con la nueva posición
+                for (let zona of window.zonas) {
+                    if (zona.id === shape.zonaId) {
+                        zona.x = Math.round(shape.left);
+                        zona.y = Math.round(shape.top);
+                        if (wasResized) {
+                            zona.width = Math.max(80, Math.round((zona.width || shape.width || 200) * scaleX));
+                            zona.height = Math.max(80, Math.round((zona.height || shape.height || 150) * scaleY));
+                        }
+                        shape.zona = zona;
+                        break;
+                    }
+                }
+
+                if (wasResized) {
+                    loadZonasOnCanvas();
+                    selectZona(shape.zonaId);
+                    return;
+                }
+                
+                // Actualizar también la posición del texto asociado
+                window.canvas.forEachObject(obj => {
+                    if (obj.zonaText && obj.zonaId === shape.zonaId) {
+                        obj.set({
+                            left: shape.left + (shape.zona.width || 100) / 2,
+                            top: shape.top + (shape.zona.height || 75) / 2
+                        });
+                    }
+                });
+                
+                console.log(`Zona "${shape.zona.nombre}" movida a (${Math.round(shape.left)}, ${Math.round(shape.top)})`);
+                renderZonasList();
+                window.canvas.renderAll();
+            }
+        });
+
+        window.canvas.on('object:selected', function(e) {
+            if (e.target && e.target.zonaId) {
+                selectZona(e.target.zonaId);
+            }
+        });
+    } catch (error) {
+        console.error('Error al inicializar canvas:', error);
+        setTimeout(initializeCanvas, 100);
+    }
+}
+
+// Inicializar cuando el documento esté listo
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeCanvas);
+} else {
+    // Agregar un pequeño delay para asegurar que fabric.js se ha cargado
+    setTimeout(initializeCanvas, 100);
+}
+
+function loadZonasOnCanvas() {
+    const canvas = window.canvas;
+    if (!canvas) return; // Salir si el canvas no está inicializado
+    
+    canvas.clear();
+    
+    // Distribuir zonas automáticamente si todas están en la misma posición
+    const allSamePosition = window.zonas.length > 1 && window.zonas.every(z => z.x === window.zonas[0].x && z.y === window.zonas[0].y);
+    if (allSamePosition || window.zonas.some(z => !z.x || !z.y)) {
+        distributeZonas();
+    }
+    
+    window.zonas.forEach(zona => {
+        const shape = zona.shape || 'rectangle';
+        let fabricObject;
+
+        switch(shape) {
+            case 'l-shape':
+                fabricObject = createLShape(zona);
+                break;
+            case 'triangle':
+                fabricObject = createTriangle(zona);
+                break;
+            case 'hexagon':
+                fabricObject = createHexagon(zona);
+                break;
+            default:
+                fabricObject = createRectangleShape(zona);
+        }
+
+        if (fabricObject) {
+            canvas.add(fabricObject);
+            
+            // Agregar texto que se mueve con la zona
+            const text = new fabric.Text(zona.nombre, {
+                left: zona.x + (zona.width || 100) / 2,
+                top: zona.y + (zona.height || 75) / 2,
+                fontSize: 14,
+                fill: '#fff',
+                textAlign: 'center',
+                originX: 'center',
+                originY: 'center',
+                selectable: false,
+                evented: false,
+            });
+            canvas.add(text);
+            
+            // Asociar el texto al objeto para identificarla como zona
+            fabricObject.zona = zona;
+            text.zonaText = true;
+            text.zonaId = zona.id;
+        }
+    });
+    canvas.renderAll();
+}
+
+function distributeZonas() {
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+    const padding = 20;
+    const usableWidth = canvasWidth - (padding * 2);
+    const usableHeight = canvasHeight - (padding * 2);
+    
+    // Determinar grid de distribución
+    const cols = Math.ceil(Math.sqrt(zonas.length));
+    const rows = Math.ceil(zonas.length / cols);
+    
+    const cellWidth = usableWidth / cols;
+    const cellHeight = usableHeight / rows;
+    
+    zonas.forEach((zona, index) => {
+        const row = Math.floor(index / cols);
+        const col = index % cols;
+        
+        // Posicionar en el centro de cada celda
+        zona.x = padding + (col * cellWidth) + (cellWidth - (zona.width || 200)) / 2;
+        zona.y = padding + (row * cellHeight) + (cellHeight - (zona.height || 150)) / 2;
+    });
+}
+
+function createRectangleShape(zona) {
+    const rect = new fabric.Rect({
+        left: zona.x,
+        top: zona.y,
+        width: zona.width,
+        height: zona.height,
+        fill: zona.color,
+        stroke: '#333',
+        strokeWidth: 2,
+        opacity: 0.7,
+        hasControls: true,
+        hasBorders: true,
+    });
+    rect.zonaId = zona.id;
+    rect.zonaNombre = zona.nombre;
+    applyLockState(rect, zona);
+    return rect;
+}
+
+function createLShape(zona) {
+    // Crear forma de L usando Polygon
+    const w = zona.width || 200;
+    const h = zona.height || 150;
+    const thickness = Math.min(w, h) * 0.4;
+    
+    const points = [
+        { x: zona.x, y: zona.y },
+        { x: zona.x + w, y: zona.y },
+        { x: zona.x + w, y: zona.y + thickness },
+        { x: zona.x + thickness, y: zona.y + thickness },
+        { x: zona.x + thickness, y: zona.y + h },
+        { x: zona.x, y: zona.y + h }
+    ];
+    
+    const polygon = new fabric.Polygon(points, {
+        fill: zona.color,
+        stroke: '#333',
+        strokeWidth: 2,
+        opacity: 0.7,
+        hasControls: true,
+    });
+    polygon.zonaId = zona.id;
+    polygon.zonaNombre = zona.nombre;
+    applyLockState(polygon, zona);
+    return polygon;
+}
+
+function createTriangle(zona) {
+    const w = zona.width || 150;
+    const h = zona.height || 130;
+    
+    const points = [
+        { x: zona.x + w / 2, y: zona.y },
+        { x: zona.x + w, y: zona.y + h },
+        { x: zona.x, y: zona.y + h }
+    ];
+    
+    const polygon = new fabric.Polygon(points, {
+        fill: zona.color,
+        stroke: '#333',
+        strokeWidth: 2,
+        opacity: 0.7,
+        hasControls: true,
+    });
+    polygon.zonaId = zona.id;
+    polygon.zonaNombre = zona.nombre;
+    applyLockState(polygon, zona);
+    return polygon;
+}
+
+function createHexagon(zona) {
+    const w = zona.width || 150;
+    const h = zona.height || 130;
+    const cx = zona.x + w / 2;
+    const cy = zona.y + h / 2;
+    const radius = Math.min(w, h) / 2;
+    
+    const points = [];
+    for (let i = 0; i < 6; i++) {
+        const angle = (i * 60 * Math.PI) / 180;
+        points.push({
+            x: cx + radius * Math.cos(angle),
+            y: cy + radius * Math.sin(angle)
+        });
+    }
+    
+    const polygon = new fabric.Polygon(points, {
+        fill: zona.color,
+        stroke: '#333',
+        strokeWidth: 2,
+        opacity: 0.7,
+        hasControls: true,
+    });
+    polygon.zonaId = zona.id;
+    polygon.zonaNombre = zona.nombre;
+    applyLockState(polygon, zona);
+    return polygon;
+}
+
+function renderZonasList() {
+    const list = document.getElementById('zonasList');
+    list.innerHTML = '';
+
+    window.zonas.forEach(zona => {
+        const card = document.createElement('div');
+        card.className = 'zona-card' + (selectedZona && selectedZona.id === zona.id ? ' active' : '');
+        card.onclick = () => selectZona(zona.id);
+
+        card.innerHTML = `
+            <div class="zona-color" style="background-color: ${zona.color}"></div>
+            <div class="zona-info">
+                <div class="zona-name">${zona.nombre}</div>
+                <div class="zona-tables">${zona.mesas_count} mesas</div>
+            </div>
+            <div class="zona-actions">
+                <button class="btn-zone-action ${zona.locked ? 'locked' : ''}" onclick="toggleZonaLock(event, ${zona.id})" title="${zona.locked ? 'Desbloquear zona' : 'Bloquear zona'}">
+                    <i class="fas ${zona.locked ? 'fa-lock' : 'fa-lock-open'}"></i>
+                </button>
+                <button class="btn-zone-action" onclick="editZona(event, ${zona.id})">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn-zone-action delete" onclick="deleteZona(event, ${zona.id})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+
+        list.appendChild(card);
+    });
+}
+
+function selectZona(zonaId) {
+    selectedZona = window.zonas.find(z => z.id === zonaId);
+    renderZonasList();
+    highlightZonaOnCanvas(zonaId);
+}
+
+function highlightZonaOnCanvas(zonaId) {
+    const canvas = window.canvas;
+    if (!canvas) return;
+    
+    canvas.forEachObject(obj => {
+        if (obj.zonaId === zonaId) {
+            canvas.setActiveObject(obj);
+            obj.set({ strokeWidth: 3, stroke: '#5B6EFF', opacity: 0.9 });
+        } else if (obj.zonaId && !obj.zonaText) {
+            obj.set({ strokeWidth: 2, stroke: '#333', opacity: 0.7 });
+        }
+    });
+    canvas.renderAll();
+}
+
+function toggleZonaLock(event, zonaId) {
+    event.stopPropagation();
+    const zona = window.zonas.find(z => z.id === zonaId);
+    if (!zona) return;
+
+    zona.locked = !zona.locked;
+    const savedLocks = JSON.parse(localStorage.getItem('zonaLocks') || '{}');
+    savedLocks[zona.id] = zona.locked;
+    localStorage.setItem('zonaLocks', JSON.stringify(savedLocks));
+
+    window.canvas.forEachObject(obj => {
+        if (obj.zonaId === zonaId && !obj.zonaText) {
+            applyLockState(obj, zona);
+        }
+    });
+    renderZonasList();
+    window.canvas.renderAll();
+}
+
+function openNewZonaModal() {
+    document.getElementById('modalTitle').textContent = 'Nueva Zona';
+    document.getElementById('zonaName').value = '';
+    document.getElementById('zonaShape').value = 'rectangle';
+    document.getElementById('zonaColor').value = '#FF6B6B';
+    isEditingZona = null;
+    document.getElementById('zonaModal').classList.add('show');
+}
+
+function editZona(event, zonaId) {
+    event.stopPropagation();
+    const zona = window.zonas.find(z => z.id === zonaId);
+    if (zona) {
+        document.getElementById('modalTitle').textContent = 'Editar Zona';
+        document.getElementById('zonaName').value = zona.nombre;
+        document.getElementById('zonaColor').value = zona.color;
+        document.getElementById('zonaShape').value = zona.shape === 'u-shape' ? 'rectangle' : (zona.shape || 'rectangle');
+        isEditingZona = zona.id;
+        document.getElementById('zonaModal').classList.add('show');
+    }
+}
+
+function closeZonaModal() {
+    document.getElementById('zonaModal').classList.remove('show');
+}
+
+function createZona() {
+    const nombre = document.getElementById('zonaName').value.trim();
+    const color = document.getElementById('zonaColor').value;
+    const shape = document.getElementById('zonaShape').value;
+
+    if (!nombre) {
+        alert('Por favor ingresa un nombre para la zona');
+        return;
+    }
+
+    if (isEditingZona !== null) {
+        // Editar zona existente
+        const zona = window.zonas.find(z => z.id === isEditingZona);
+        if (zona) {
+            zona.nombre = nombre;
+            zona.color = color;
+            zona.shape = shape;
+        }
+    } else {
+        // Crear nueva zona con búsqueda de posición disponible
+        const newZona = {
+            id: tempZonaId--,  // ID temporal negativo hasta guardar en el servidor
+            nombre: nombre,
+            color: color,
+            shape: shape,
+            x: 100,
+            y: 100,
+            width: 260,
+            height: 160,
+            locked: false,
+            mesas_count: 0
+        };
+        
+        // Buscar una posición disponible si la posición inicial colisiona
+        let attempts = 0;
+        while (checkCollision(newZona, window.zonas) && attempts < 10) {
+            newZona.x += 230; // Mover 230px a la derecha (ancho + separación)
+            if (newZona.x > window.innerWidth - 250) {
+                newZona.x = 100;
+                newZona.y += 180; // Si se sale del ancho, bajar 180px
+            }
+            attempts++;
+        }
+        
+        if (attempts >= 10) {
+            alert('No hay espacio disponible para crear una nueva zona. Por favor, elimina o mueve zonas existentes.');
+            return;
+        }
+        
+        window.zonas.push(newZona);
+    }
+
+    loadZonasOnCanvas();
+    renderZonasList();
+    closeZonaModal();
+}
+
+function deleteZona(event, zonaId) {
+    event.stopPropagation();
+    if (confirm('¿Estás seguro de que deseas eliminar esta zona?')) {
+        window.zonas = window.zonas.filter(z => z.id !== zonaId);
+        if (selectedZona && selectedZona.id === zonaId) {
+            selectedZona = null;
+        }
+        loadZonasOnCanvas();
+        renderZonasList();
+    }
+}
+
+// Detectar colisión entre dos rectángulos (AABB - Axis-Aligned Bounding Box)
+function checkCollision(zona1, allZonas) {
+    const padding = 10; // Margen mínimo entre zonas
+    
+    const rect1 = {
+        left: zona1.x - padding,
+        right: zona1.x + zona1.width + padding,
+        top: zona1.y - padding,
+        bottom: zona1.y + zona1.height + padding
+    };
+    
+    for (let zona2 of allZonas) {
+        if (zona1.id === zona2.id) continue; // No comparar consigo mismo
+        
+        const rect2 = {
+            left: zona2.x,
+            right: zona2.x + zona2.width,
+            top: zona2.y,
+            bottom: zona2.y + zona2.height
+        };
+        
+        // Verificar si hay superposición
+        if (!(rect1.right < rect2.left || 
+              rect1.left > rect2.right || 
+              rect1.bottom < rect2.top || 
+              rect1.top > rect2.bottom)) {
+            return true; // Hay colisión
+        }
+    }
+    
+    return false; // No hay colisión
+}
+
+function saveChanges() {
+    // Obtener token CSRF
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                     document.querySelector('[name=csrf]')?.value ||
+                     getCookie('csrftoken');
+    
+    // Enviar datos al servidor
+    fetch('/admin/zonas/guardar/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({ zonas: window.zonas })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('✓ ' + data.message);
+            // Recargar la página para mostrar los cambios persistidos
+            setTimeout(() => location.reload(), 500);
+        } else {
+            alert('❌ Error: ' + (data.error || 'Error desconocido'));
+        }
+    })
+    .catch(error => {
+        console.error('Error al guardar zonas:', error);
+        alert('❌ Error de conexión al guardar zonas');
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Cerrar modal al hacer clic fuera
+document.addEventListener('click', function(event) {
+    const modal = document.getElementById('zonaModal');
+    if (event.target === modal) {
+        closeZonaModal();
+    }
+});
+</script>
+{% endblock %}

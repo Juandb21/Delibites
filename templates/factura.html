@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: "Segoe UI", Tahoma, sans-serif; background: #fff7f0; color: #111827; }
+        .page { width: min(760px, calc(100% - 32px)); margin: 32px auto; }
+        .invoice { background: white; border-radius: 12px; padding: 32px; box-shadow: 0 12px 30px rgba(17,24,39,.14); }
+        .head { display: flex; justify-content: space-between; gap: 18px; border-bottom: 2px solid #e5e7eb; padding-bottom: 20px; margin-bottom: 20px; }
+        h1 { margin: 0; color: #e60012; }
+        .muted { color: #64748b; }
+        .info { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 24px; }
+        .order { border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 14px; }
+        .line { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; }
+        .total { border-top: 2px solid #e5e7eb; margin-top: 18px; padding-top: 18px; font-size: 24px; font-weight: 800; color: #e60012; }
+        .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
+        .btn { border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px; text-align: center; text-decoration: none; color: #0f172a; background: white; font-weight: 800; cursor: pointer; }
+        .print { border: 0; background: #059669; color: white; }
+        @media print {
+            body { background: white; }
+            .page { margin: 0; width: 100%; }
+            .invoice { box-shadow: none; border-radius: 0; }
+            .actions { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <section class="invoice">
+            <div class="head">
+                <div>
+                    <h1>Factura</h1>
+                    <div class="muted">Restaurante DeliBites</div>
+                </div>
+                <div style="text-align:right;">
+                    <strong>No. {{ factura.numero }}</strong>
+                    <div class="muted">{{ factura.fecha|date:"d/m/Y H:i" }}</div>
+                </div>
+            </div>
+
+            <div class="info">
+                <div><strong>Mesa:</strong> {{ factura.mesa }}</div>
+                <div><strong>Cliente:</strong> {{ factura.cliente }}</div>
+                <div><strong>Cajero:</strong> {{ factura.cajero }}</div>
+                <div><strong>Método:</strong> {{ factura.metodo_pago }}</div>
+            </div>
+
+            {% for venta in factura.ventas %}
+            <div class="order">
+                <strong>Pedido #{{ venta.pedido_numero }}</strong>
+                {% for item in venta.items %}
+                <div class="line">
+                    <span>{{ item.cantidad }}x {{ item.producto }}</span>
+                    <span>{{ item.subtotal_display }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+
+            <div class="line total">
+                <span>Total pagado</span>
+                <span>{{ factura.total_display }}</span>
+            </div>
+        </section>
+
+        <div class="actions">
+            <a class="btn" href="{% url back_url %}">{{ back_label }}</a>
+            <button class="btn print" onclick="window.print()">Imprimir factura</button>
+        </div>
+    </main>
+</body>
+</html>

@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="5">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #fff7f0;
+            color: #0f172a;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .kitchen-header {
+            background: linear-gradient(90deg, #e60012, #f0440b);
+            color: white;
+            padding: 22px 52px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            box-shadow: 0 4px 20px rgba(17, 24, 39, 0.18);
+        }
+
+        .kitchen-brand {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .brand-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.18);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+        }
+
+        .kitchen-brand h1 {
+            font-size: 30px;
+            line-height: 1.1;
+        }
+
+        .kitchen-brand span {
+            display: block;
+            font-size: 16px;
+            margin-top: 5px;
+            opacity: 0.95;
+        }
+
+        .header-side {
+            display: flex;
+            align-items: center;
+            gap: 22px;
+        }
+
+        .clock {
+            text-align: right;
+        }
+
+        .clock strong {
+            display: block;
+            font-size: 30px;
+            line-height: 1;
+        }
+
+        .clock span {
+            display: block;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+
+        .logout-btn {
+            border: 0;
+            border-radius: 9px;
+            background: rgba(255, 255, 255, 0.18);
+            color: white;
+            padding: 16px 24px;
+            text-decoration: none;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .kitchen-page {
+            width: min(1280px, calc(100% - 72px));
+            margin: 32px auto;
+        }
+
+        .section-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            background: #dbeafe;
+            color: #1e40af;
+            border-radius: 12px 12px 0 0;
+            padding: 18px 24px;
+        }
+
+        .section-head h2 {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 24px;
+        }
+
+        .count-pill {
+            min-width: 44px;
+            height: 44px;
+            border-radius: 999px;
+            background: #bfdbfe;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        .orders-shell {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 12px 30px rgba(17, 24, 39, 0.12);
+            overflow: hidden;
+        }
+
+        .orders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+            gap: 18px;
+            padding: 24px;
+            align-items: start;
+        }
+
+        .order-card {
+            border: 4px solid #fb7185;
+            border-radius: 12px;
+            background: #fff7f7;
+            padding: 24px;
+            min-height: 310px;
+        }
+
+        .order-card.urgent {
+            border-color: #ef4444;
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.08);
+        }
+
+        .order-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .order-top h3 {
+            font-size: 30px;
+            color: #111827;
+        }
+
+        .order-top p {
+            color: #6b7280;
+            font-size: 18px;
+            margin-top: 6px;
+        }
+
+        .order-time {
+            text-align: right;
+            color: #fb3f55;
+            font-size: 22px;
+            white-space: nowrap;
+        }
+
+        .urgent-label {
+            display: block;
+            color: #ef4444;
+            font-size: 12px;
+            margin-top: 8px;
+            text-transform: uppercase;
+        }
+
+        .items-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .order-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: white;
+            border-radius: 9px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(17, 24, 39, 0.12);
+            font-size: 22px;
+        }
+
+        .qty {
+            width: 48px;
+            height: 48px;
+            border-radius: 999px;
+            background: #fb7185;
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 800;
+            flex: 0 0 auto;
+        }
+
+        .empty-kitchen {
+            padding: 70px 24px;
+            text-align: center;
+            color: #64748b;
+            font-size: 22px;
+        }
+
+        @media (max-width: 760px) {
+            .kitchen-header {
+                padding: 18px;
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .header-side {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .kitchen-page {
+                width: calc(100% - 28px);
+                margin: 20px auto;
+            }
+
+            .orders-grid {
+                grid-template-columns: 1fr;
+                padding: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="kitchen-header">
+        <div class="kitchen-brand">
+            <div class="brand-icon"><i class="fas fa-hat-chef"></i></div>
+            <div>
+                <h1>Monitor de Cocina</h1>
+                <span>Pedidos en preparación</span>
+            </div>
+        </div>
+        <div class="header-side">
+            <div class="clock">
+                <strong id="clock">--:--:--</strong>
+                <span>Actualización automática cada 5 segundos</span>
+            </div>
+            <a class="logout-btn" href="{% url 'logout' %}">
+                <i class="fas fa-arrow-right-from-bracket"></i> Salir
+            </a>
+        </div>
+    </header>
+
+    <main class="kitchen-page">
+        <section class="orders-shell">
+            <div class="section-head">
+                <h2><i class="fas fa-kitchen-set"></i> En Preparación</h2>
+                <span class="count-pill">{{ orders_count }}</span>
+            </div>
+
+            {% if orders %}
+            <div class="orders-grid">
+                {% for order in orders %}
+                <article class="order-card {% if order.urgent %}urgent{% endif %}">
+                    <div class="order-top">
+                        <div>
+                            <h3>Mesa {{ order.mesa }}</h3>
+                            <p>{{ order.cliente }}</p>
+                        </div>
+                        <div class="order-time">
+                            {{ order.minutes }} min
+                            {% if order.urgent %}
+                            <span class="urgent-label"><i class="fas fa-fire"></i> Urgente</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="items-list">
+                        {% for item in order.detalles %}
+                        <div class="order-item">
+                            <span class="qty">{{ item.cantidad }}</span>
+                            <span>{{ item.producto }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-kitchen">No hay pedidos en preparación.</div>
+            {% endif %}
+        </section>
+    </main>
+
+    <script>
+        // Obtener la hora del servidor en timestamp Unix
+        const serverTimestamp = new Date('{{ now|date:"c" }}').getTime();
+        const clientTimestamp = Date.now();
+        const timeDifference = serverTimestamp - clientTimestamp;
+
+        function updateClock() {
+            // Usar la hora actual del cliente + la diferencia con el servidor
+            const serverTime = new Date(Date.now() + timeDifference);
+            document.getElementById('clock').textContent = new Intl.DateTimeFormat('es-CO', {
+                hour: 'numeric',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true,
+                timeZone: 'America/Bogota'
+            }).format(serverTime);
+        }
+
+        updateClock();
+        setInterval(updateClock, 1000);
+    </script>
+</body>
+</html>

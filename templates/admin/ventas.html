@@ -1,0 +1,62 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="content-section">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 class="section-title" style="margin: 0;">Facturas</h2>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
+            <h3>Total de Ventas</h3>
+            <div class="stat-value">{{ total_ventas }}</div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Hora</th>
+                    <th>Mesa</th>
+                    <th>Cliente</th>
+                    <th>Items</th>
+                    <th>Método Pago</th>
+                    <th>Total</th>
+                    <th>Detalle</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for venta in ventas %}
+                <tr>
+                    <td>{{ venta.fecha_venta|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        {% if venta.mesa %}
+                            Mesa {{ venta.mesa }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>{{ venta.cliente }}</td>
+                    <td>{{ venta.items }}</td>
+                    <td>
+                        <span class="badge badge-info">{{ venta.metodo_pago }}</span>
+                    </td>
+                    <td style="color: #E63946; font-weight: 600;">{{ venta.monto_total }}</td>
+                    <td>
+                        <a href="{{ venta.detalle_url }}" class="admin-action-button admin-action-edit" style="padding: 8px 12px; text-decoration: none;">
+                            <i class="fas fa-eye"></i> Ver detalle
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="no-data">No hay ventas registradas</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

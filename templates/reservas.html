@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { min-height: 100vh; font-family: "Segoe UI", Tahoma, sans-serif; background: #fff7f0; color: #111827; }
+        .topbar { background: #e60012; color: white; padding: 16px 42px; display: flex; justify-content: space-between; align-items: center; }
+        .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 20px; }
+        .topbar a { color: white; text-decoration: none; font-weight: 700; }
+        .page { width: min(1240px, calc(100% - 40px)); margin: 28px auto; display: grid; grid-template-columns: 1.1fr .9fr; gap: 22px; }
+        .panel { background: white; border-radius: 10px; padding: 22px; box-shadow: 0 12px 28px rgba(17,24,39,.12); }
+        .panel h2 { font-size: 24px; margin-bottom: 16px; display: flex; gap: 10px; align-items: center; }
+        .messages { display: grid; gap: 10px; margin-bottom: 16px; }
+        .message { padding: 12px 14px; border-radius: 8px; font-weight: 700; }
+        .message.success { background: #dcfce7; color: #166534; }
+        .message.error { background: #fee2e2; color: #991b1b; }
+        .zone-tabs { display: flex; gap: 8px; padding: 6px; background: #f8fafc; border-radius: 10px; overflow-x: auto; margin-bottom: 16px; }
+        .mesa-grid { display: none; }
+        .zone-tab { border: 0; border-radius: 8px; padding: 11px 14px; background: #eef2f7; color: #1f2937; cursor: pointer; font-weight: 800; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+        .zone-tab.active { background: #e60012; color: white; }
+        .zone-dot { width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(0,0,0,.18); }
+        .zone-panel { display: none; }
+        .zone-panel.active { display: block; }
+        .zone-title { display: flex; justify-content: space-between; gap: 12px; align-items: center; border-bottom: 1px solid #e5e7eb; padding-bottom: 12px; margin-bottom: 14px; }
+        .zone-title h3 { font-size: 24px; }
+        .zone-layout { position: relative; border: 3px solid var(--zone-color); border-radius: 12px; background: color-mix(in srgb, var(--zone-color) 18%, white); background-repeat: no-repeat; overflow: hidden; min-height: 440px; max-width: 100%; margin: 0 auto; }
+        .zone-layout.shape-l-shape { clip-path: polygon(0 0, 100% 0, 100% 40%, 40% 40%, 40% 100%, 0 100%); }
+        .zone-layout.shape-triangle { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+        .zone-layout.shape-hexagon { clip-path: polygon(50% 0, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%); }
+        .zone-layout-name { position: absolute; top: 18px; left: 22px; font-size: 28px; font-weight: 900; color: #111827; opacity: .7; pointer-events: none; }
+        .table-card { position: absolute; width: 104px; height: 104px; border: 3px solid #222; border-radius: 8px; background: #f8fafc; box-shadow: 0 8px 18px rgba(17,24,39,.18); cursor: pointer; padding: 10px; text-align: center; transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .table-card:hover { transform: translateY(-2px); border-color: #e60012; }
+        .table-card.active { border-color: #e60012; background: #fff1f2; box-shadow: 0 0 0 4px rgba(230,0,18,.14); }
+        .table-card.table-ocupada { background: #fee2e2; border-color: #e11d48; cursor: not-allowed; opacity: .86; }
+        .table-card.table-ocupada:hover { transform: none; border-color: #e11d48; }
+        .table-number { font-size: 19px; font-weight: 900; margin-bottom: 5px; }
+        .table-meta { color: #4b5563; font-size: 11px; line-height: 1.35; }
+        .table-status { background: #dcfce7; color: #166534; border-radius: 999px; padding: 3px 8px; margin-bottom: 7px; font-size: 10px; font-weight: 900; text-transform: uppercase; }
+        .table-ocupada .table-status { background: #fecdd3; color: #9f1239; }
+        .muted { color: #64748b; font-size: 13px; }
+        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+        .form-group { margin-bottom: 14px; }
+        label { display: block; font-weight: 700; margin-bottom: 7px; }
+        input, select, textarea { width: 100%; border: 1px solid #d1d5db; border-radius: 7px; padding: 11px; font: inherit; }
+        textarea { min-height: 76px; resize: vertical; }
+        .menu-tabs { display: flex; gap: 8px; padding: 6px; background: #f8fafc; border-radius: 10px; overflow-x: auto; margin-bottom: 12px; }
+        .menu-tab { border: 0; border-radius: 8px; padding: 10px 14px; background: #eef2f7; color: #1f2937; cursor: pointer; font-weight: 800; white-space: nowrap; }
+        .menu-tab.active { background: #e60012; color: white; }
+        .products { display: grid; gap: 10px; max-height: 330px; overflow: auto; padding-right: 4px; }
+        .product { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; }
+        .product-info { display: flex; align-items: center; gap: 12px; min-width: 0; }
+        .product-photo { width: 58px; height: 58px; border-radius: 8px; object-fit: cover; background: #fee2e2; border: 1px solid #e5e7eb; flex-shrink: 0; }
+        .qty-controls { display: flex; align-items: center; gap: 8px; }
+        .qty-controls button { width: 34px; height: 34px; border: 0; border-radius: 7px; background: #e60012; color: white; font-weight: 900; cursor: pointer; }
+        .qty-controls span { min-width: 22px; text-align: center; font-weight: 800; }
+        .summary { border: 1px solid #fed7aa; background: #fff7ed; border-radius: 8px; padding: 14px; margin-top: 14px; display: grid; gap: 8px; }
+        .line { display: flex; justify-content: space-between; gap: 12px; }
+        .line.total { border-top: 1px solid #fdba74; padding-top: 10px; font-size: 18px; font-weight: 900; color: #e60012; }
+        .submit { width: 100%; border: 0; border-radius: 8px; padding: 14px; margin-top: 14px; background: #e60012; color: white; font-weight: 900; cursor: pointer; }
+        .submit:disabled { background: #94a3b8; cursor: not-allowed; }
+        .reservas { display: grid; gap: 10px; }
+        .reserva-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; }
+        .reserva-card strong { display: block; margin-bottom: 5px; }
+        .edit-btn { margin-top: 10px; border: 1px solid #2563eb; background: #eff6ff; color: #1d4ed8; border-radius: 7px; padding: 9px 12px; font-weight: 800; cursor: pointer; }
+        @media (max-width: 900px) { .page { grid-template-columns: 1fr; } .topbar { padding: 14px 18px; } }
+        @media (max-width: 560px) { .form-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <div class="brand"><i class="fas fa-utensils"></i> DeliBites Reservas</div>
+        <a href="{% url 'logout' %}"><i class="fas fa-arrow-right-from-bracket"></i> Salir</a>
+    </header>
+
+    <main class="page">
+        <section class="panel">
+            {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                <div class="message {{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <h2><i class="fas fa-chair"></i> Elige tu mesa</h2>
+            <p class="muted" style="margin: -6px 0 16px;">Atendemos todos los dias de 12:00 a. m. a 10:00 p. m. Las reservas se reciben de 1:00 p. m. a 9:00 p. m.</p>
+            <div class="mesa-grid">
+                {% for mesa in mesas %}
+                <button class="mesa-btn" type="button" onclick="selectMesa(this, {{ mesa.id }}, {{ mesa.numero }}, {{ mesa.capacidad }})">
+                    <strong>Mesa {{ mesa.numero }}</strong>
+                    <span class="muted">{{ mesa.zona.nombre|default:"Sin zona" }} · {{ mesa.capacidad }} personas</span>
+                </button>
+                {% empty %}
+                <p class="muted">No hay mesas disponibles.</p>
+                {% endfor %}
+            </div>
+
+            <div class="zone-tabs" role="tablist">
+                {% for zona in zonas %}
+                <button class="zone-tab {% if forloop.first %}active{% endif %}" type="button" onclick="showZone('{{ zona.id }}')" id="tab-{{ zona.id }}">
+                    <span class="zone-dot" style="background: {{ zona.color }}"></span>
+                    {{ zona.nombre }}
+                </button>
+                {% empty %}
+                <button class="zone-tab active" type="button">Sin zonas</button>
+                {% endfor %}
+            </div>
+
+            {% for zona in zonas %}
+            <section class="zone-panel {% if forloop.first %}active{% endif %}" id="zone-{{ zona.id }}">
+                <div class="zone-title">
+                    <div>
+                        <h3>{{ zona.nombre }}</h3>
+                        <span class="muted">{{ zona.mesas_set.count }} mesas en esta zona</span>
+                    </div>
+                </div>
+                <div class="zone-layout shape-{{ zona.shape }}" style="--zone-color: {{ zona.color }};" data-zona-id="{{ zona.id }}">
+                    <div class="zone-layout-name">{{ zona.nombre }}</div>
+                    {% for mesa in zona.mesas_set.all %}
+                    <button class="table-card {% if mesa.has_unpaid_order %}table-ocupada{% endif %}" type="button" data-mesa-id="{{ mesa.id }}" data-mesa-numero="{{ mesa.numero }}" onclick="selectMesa(this, {{ mesa.id }}, {{ mesa.numero }}, {{ mesa.capacidad }}, '{{ zona.nombre|escapejs }}')" {% if mesa.has_unpaid_order %}disabled{% endif %}>
+                        <div class="table-status">{% if mesa.has_unpaid_order %}Ocupada{% else %}Disponible{% endif %}</div>
+                        <div class="table-number">Mesa {{ mesa.numero }}</div>
+                        <div class="table-meta">{{ mesa.capacidad }} personas<br>{{ zona.nombre }}</div>
+                    </button>
+                    {% empty %}
+                    <p class="muted" style="padding: 80px 24px;">Esta zona todavía no tiene mesas disponibles.</p>
+                    {% endfor %}
+                </div>
+            </section>
+            {% empty %}
+            <p class="muted">No hay zonas creadas para mostrar mesas.</p>
+            {% endfor %}
+
+            <form method="POST" id="reservationForm" style="margin-top: 22px;">
+                {% csrf_token %}
+                <input type="hidden" id="reservaId" name="reserva_id">
+                <input type="hidden" id="mesaId" name="mesa_id">
+                <input type="hidden" id="itemsJson" name="items_json">
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="nombre">Nombre</label>
+                        <input id="nombre" name="nombre" value="{{ default_nombre }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Correo</label>
+                        <input id="email" name="email" type="email" value="{{ default_email }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="telefono">Teléfono</label>
+                        <input id="telefono" name="telefono" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="personas">Personas</label>
+                        <input id="personas" name="personas" type="number" min="1" value="2" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="fecha">Fecha</label>
+                        <input id="fecha" name="fecha" type="date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="hora">Hora</label>
+                        <input id="hora" name="hora" type="time" min="13:00" max="21:00" step="300" required>
+                        <div class="muted" style="margin-top: 6px;">Reservas disponibles de 1:00 p. m. a 9:00 p. m. Cada reserva bloquea la mesa por 1 hora.</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="comentarios">Comentarios</label>
+                    <textarea id="comentarios" name="comentarios" placeholder="Alguna indicación especial..."></textarea>
+                </div>
+
+                <h2 style="margin-top: 20px;"><i class="fas fa-bowl-food"></i> Pedido para tu reserva</h2>
+                <div class="menu-tabs" id="categoryTabs"></div>
+                <div class="products" id="products"></div>
+
+                <div class="summary">
+                    <div class="line"><span>Comida</span><span id="foodTotal">$0</span></div>
+                    <div class="line"><span>Recargo de reserva</span><span>{{ recargo_reserva_display }}</span></div>
+                    <div class="line total"><span>Total</span><span id="grandTotal">{{ recargo_reserva_display }}</span></div>
+                </div>
+
+                <button class="submit" id="submitBtn" type="submit" disabled>Reservar mesa</button>
+            </form>
+        </section>
+
+        <aside class="panel">
+            <h2><i class="fas fa-calendar-check"></i> Mis reservas</h2>
+            <div class="reservas">
+                {% for reserva in reservas_cliente %}
+                <div class="reserva-card">
+                    <strong>Mesa {{ reserva.mesa }} · {{ reserva.fecha|date:"d/m/Y" }} {{ reserva.hora|time:"H:i" }}</strong>
+                    <div class="muted">{{ reserva.estado }} · Total {{ reserva.total_display }}</div>
+                    {% if reserva.puede_editar %}
+                    <button class="edit-btn" type="button" onclick="startEdit({{ reserva.id }})">Editar pedido</button>
+                    {% else %}
+                    <div class="muted" style="margin-top: 8px;">Edición cerrada</div>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <p class="muted">Todavía no tienes reservas.</p>
+                {% endfor %}
+            </div>
+        </aside>
+    </main>
+
+    <script>
+        const products = {{ productos_menu_json|safe }};
+        const zonasData = {{ zonas_json|safe }};
+        const mesasData = {{ mesas_json|safe }};
+        const quantities = {};
+        const recargoReserva = 10000;
+        let selectedMesa = null;
+        let currentCategory = products[0]?.categoria || '';
+
+        function formatCurrency(value) {
+            return `$${Number(value || 0).toLocaleString('es-CO', { maximumFractionDigits: 0 })}`;
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, char => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            }[char]));
+        }
+
+        function menuCategories() {
+            return [...new Set(products.map(product => product.categoria))];
+        }
+
+        function renderCategoryTabs() {
+            const tabs = document.getElementById('categoryTabs');
+            const categories = menuCategories();
+            if (!currentCategory && categories.length) {
+                currentCategory = categories[0];
+            }
+
+            tabs.innerHTML = categories.map((category, index) => `
+                <button class="menu-tab ${category === currentCategory ? 'active' : ''}" type="button" onclick="setCategoryByIndex(${index})">
+                    ${escapeHtml(category)}
+                </button>
+            `).join('');
+        }
+
+        function setCategoryByIndex(index) {
+            const category = menuCategories()[index];
+            if (category) {
+                setCategory(category);
+            }
+        }
+
+        function setCategory(category) {
+            currentCategory = category;
+            renderCategoryTabs();
+            renderProducts();
+        }
+
+        function showZone(zonaId) {
+            document.querySelectorAll('.zone-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.zone-panel').forEach(panel => panel.classList.remove('active'));
+            document.getElementById(`tab-${zonaId}`)?.classList.add('active');
+            document.getElementById(`zone-${zonaId}`)?.classList.add('active');
+            layoutTables();
+        }
+
+        function selectMesa(button, id, numero, capacidad, zonaNombre = '') {
+            const mesa = mesasData.find(item => item.id === id);
+            if (mesa?.estado === 'ocupada' || button.disabled) {
+                alert('Esta mesa esta ocupada en este momento.');
+                return;
+            }
+            selectedMesa = { id, numero, capacidad, zonaNombre };
+            document.getElementById('mesaId').value = id;
+            document.querySelectorAll('.table-card').forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            updateSubmitState();
+        }
+
+        function applyMesaState(mesaState) {
+            const mesa = mesasData.find(item => item.id === mesaState.id);
+            if (mesa) {
+                mesa.estado = mesaState.estado;
+                mesa.titular = mesaState.titular || '';
+            }
+
+            document.querySelectorAll(`.table-card[data-mesa-id="${mesaState.id}"]`).forEach(card => {
+                const isOcupada = mesaState.estado === 'ocupada';
+                card.classList.toggle('table-ocupada', isOcupada);
+                card.disabled = isOcupada;
+                card.querySelector('.table-status').textContent = isOcupada ? 'Ocupada' : 'Disponible';
+
+                if (isOcupada && selectedMesa?.id === mesaState.id) {
+                    selectedMesa = null;
+                    document.getElementById('mesaId').value = '';
+                    card.classList.remove('active');
+                    updateSubmitState();
+                }
+            });
+        }
+
+        async function refreshMesaStates() {
+            try {
+                const response = await fetch("{% url 'estado_mesas' %}", {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                if (!response.ok) return;
+                const data = await response.json();
+                (data.mesas || []).forEach(applyMesaState);
+            } catch (error) {
+                console.warn('No se pudo actualizar el estado de las mesas.', error);
+            }
+        }
+
+        function clamp(value, min, max) {
+            return Math.min(Math.max(value, min), max);
+        }
+
+        function fallbackGridPosition(index, total, layout, tableSize) {
+            const columns = Math.max(1, Math.ceil(Math.sqrt(total)));
+            const col = index % columns;
+            const row = Math.floor(index / columns);
+            return {
+                x: ((col + 0.5) / columns) * layout.clientWidth - tableSize / 2,
+                y: ((row + 0.5) / Math.ceil(total / columns)) * layout.clientHeight - tableSize / 2
+            };
+        }
+
+        function sizeZoneLayout(layout, zona) {
+            const panel = layout.closest('.zone-panel');
+            const availableWidth = Math.max(280, panel.clientWidth);
+            const maxHeight = Math.min(640, Math.max(440, window.innerHeight - 220));
+            const ratio = Math.max(0.35, Math.min(2.8, (zona.width || 200) / (zona.height || 150)));
+            const widthFromHeight = maxHeight * ratio;
+            const width = Math.min(availableWidth, widthFromHeight);
+            const height = Math.max(440, Math.min(maxHeight, width / ratio));
+            layout.style.width = `${Math.round(width)}px`;
+            layout.style.height = `${Math.round(height)}px`;
+        }
+
+        function layoutTables() {
+            document.querySelectorAll('.zone-panel').forEach(panel => {
+                const zonaId = Number(panel.id.replace('zone-', ''));
+                const zona = zonasData.find(item => item.id === zonaId);
+                const layout = panel.querySelector('.zone-layout');
+                const cards = Array.from(panel.querySelectorAll('.table-card'));
+                if (!zona || !layout || cards.length === 0) return;
+
+                sizeZoneLayout(layout, zona);
+
+                const padding = 34;
+                const tableSize = cards[0].offsetWidth || 104;
+                const availableWidth = Math.max(1, layout.clientWidth - padding * 2);
+                const availableHeight = Math.max(1, layout.clientHeight - padding * 2);
+                const zoneWidth = Math.max(1, zona.width || 200);
+                const zoneHeight = Math.max(1, zona.height || 150);
+                const scale = Math.min(availableWidth / zoneWidth, availableHeight / zoneHeight);
+                const drawnWidth = zoneWidth * scale;
+                const drawnHeight = zoneHeight * scale;
+                const offsetX = (layout.clientWidth - drawnWidth) / 2;
+                const offsetY = (layout.clientHeight - drawnHeight) / 2;
+
+                layout.style.backgroundSize = `${drawnWidth}px ${drawnHeight}px`;
+                layout.style.backgroundPosition = `${offsetX}px ${offsetY}px`;
+
+                cards.forEach((card, index) => {
+                    const mesaId = Number(card.dataset.mesaId);
+                    const mesa = mesasData.find(item => item.id === mesaId && item.zonaId === zonaId);
+                    let position = null;
+                    if (mesa) {
+                        const centerX = mesa.x + (mesa.width || tableSize) / 2;
+                        const centerY = mesa.y + (mesa.height || tableSize) / 2;
+                        const insideZone =
+                            centerX >= zona.x &&
+                            centerX <= zona.x + zona.width &&
+                            centerY >= zona.y &&
+                            centerY <= zona.y + zona.height;
+                        if (insideZone) {
+                            position = {
+                                x: offsetX + ((centerX - zona.x) / zoneWidth) * drawnWidth - tableSize / 2,
+                                y: offsetY + ((centerY - zona.y) / zoneHeight) * drawnHeight - tableSize / 2
+                            };
+                        }
+                    }
+                    if (!position) position = fallbackGridPosition(index, cards.length, layout, tableSize);
+                    card.style.left = `${clamp(position.x, 12, layout.clientWidth - tableSize - 12)}px`;
+                    card.style.top = `${clamp(position.y, 62, layout.clientHeight - tableSize - 12)}px`;
+                });
+            });
+        }
+
+        function renderProducts() {
+            const categoryProducts = products.filter(product => product.categoria === currentCategory);
+            const container = document.getElementById('products');
+            if (!categoryProducts.length) {
+                container.innerHTML = '<div class="muted">No hay productos disponibles en esta seccion.</div>';
+                return;
+            }
+
+            container.innerHTML = categoryProducts.map(product => `
+                <div class="product">
+                    <div class="product-info">
+                        ${product.imagen_url ? `<img class="product-photo" src="${escapeHtml(product.imagen_url)}" alt="${escapeHtml(product.nombre)}">` : `<div class="product-photo" aria-hidden="true"></div>`}
+                        <div>
+                            <strong>${escapeHtml(product.nombre)}</strong>
+                            <div class="muted">${escapeHtml(product.categoria)} - ${product.precio_display}</div>
+                        </div>
+                    </div>
+                    <div class="qty-controls">
+                        <button type="button" onclick="changeQty(${product.id}, -1)">-</button>
+                        <span>${quantities[product.id] || 0}</span>
+                        <button type="button" onclick="changeQty(${product.id}, 1)">+</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function changeQty(productId, delta) {
+            quantities[productId] = Math.max(0, (quantities[productId] || 0) + delta);
+            if (!quantities[productId]) delete quantities[productId];
+            renderProducts();
+            renderTotals();
+        }
+
+        function selectedItems() {
+            return Object.entries(quantities).map(([id, cantidad]) => ({
+                producto_id: Number(id),
+                cantidad
+            }));
+        }
+
+        function renderTotals() {
+            const foodTotal = selectedItems().reduce((sum, item) => {
+                const product = products.find(product => product.id === item.producto_id);
+                return sum + (product ? product.precio * item.cantidad : 0);
+            }, 0);
+            document.getElementById('foodTotal').textContent = formatCurrency(foodTotal);
+            document.getElementById('grandTotal').textContent = formatCurrency(foodTotal + recargoReserva);
+            document.getElementById('itemsJson').value = JSON.stringify(selectedItems());
+            updateSubmitState();
+        }
+
+        function updateSubmitState() {
+            const hora = document.getElementById('hora').value;
+            const horaValida = !hora || (hora >= '13:00' && hora <= '21:00');
+            document.getElementById('submitBtn').disabled = !document.getElementById('mesaId').value || selectedItems().length === 0 || !horaValida;
+        }
+
+        function startEdit(reservaId) {
+            document.getElementById('reservaId').value = reservaId;
+            document.getElementById('submitBtn').textContent = 'Guardar cambios';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        document.getElementById('reservationForm').addEventListener('submit', (event) => {
+            const hora = document.getElementById('hora').value;
+            if (hora < '13:00' || hora > '21:00') {
+                alert('Las reservas solo estan disponibles de 1:00 p. m. a 9:00 p. m.');
+                event.preventDefault();
+                return;
+            }
+            document.getElementById('itemsJson').value = JSON.stringify(selectedItems());
+        });
+        document.getElementById('hora').addEventListener('input', updateSubmitState);
+
+        // Usar la fecha del servidor para establecer la fecha mínima
+        const serverDate = new Date('{{ now|date:"c" }}');
+        const today = serverDate.toISOString().split('T')[0];
+        document.getElementById('fecha').min = today;
+        renderCategoryTabs();
+        renderProducts();
+        renderTotals();
+        mesasData.forEach(applyMesaState);
+        setInterval(refreshMesaStates, 5000);
+        window.addEventListener('load', layoutTables);
+        window.addEventListener('resize', layoutTables);
+    </script>
+</body>
+</html>
