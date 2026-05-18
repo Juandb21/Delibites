@@ -134,7 +134,7 @@ class EmpleadoForm(forms.ModelForm):
         label='Contraseña',
         widget=forms.PasswordInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Dejar en blanco para no cambiar',
+            'placeholder': '',
         }),
         required=False
     )

@@ -40,7 +40,6 @@ def login_view(request):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            messages.success(request, f'¡Bienvenido {user.first_name or user.username}!')
             return redirect('dashboard')
         else:
             # Mostrar errores del formulario
