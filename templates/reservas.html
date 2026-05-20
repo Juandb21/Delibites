@@ -46,8 +46,8 @@
         .form-group { margin-bottom: 14px; }
         label { display: block; font-weight: 700; margin-bottom: 7px; }
         input, select, textarea { width: 100%; border: 1px solid #d1d5db; border-radius: 7px; padding: 11px; font: inherit; }
-        textarea { min-height: 76px; resize: vertical; }
-        .menu-tabs { display: flex; gap: 8px; padding: 6px; background: #f8fafc; border-radius: 10px; overflow-x: auto; margin-bottom: 12px; }
+        textarea { min-height: 76px; resize: vertical; }        input:disabled { background: #f3f4f6; color: #9ca3af; cursor: not-allowed; opacity: 0.7; }
+        .timer-display { color: #ea8800; font-weight: 800; margin-top: 8px; font-size: 14px; }        .menu-tabs { display: flex; gap: 8px; padding: 6px; background: #f8fafc; border-radius: 10px; overflow-x: auto; margin-bottom: 12px; }
         .menu-tab { border: 0; border-radius: 8px; padding: 10px 14px; background: #eef2f7; color: #1f2937; cursor: pointer; font-weight: 800; white-space: nowrap; }
         .menu-tab.active { background: #e60012; color: white; }
         .products { display: grid; gap: 10px; max-height: 330px; overflow: auto; padding-right: 4px; }
@@ -144,15 +144,15 @@
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="nombre">Nombre</label>
-                        <input id="nombre" name="nombre" value="{{ default_nombre }}" required>
+                        <input id="nombre" name="nombre" value="{{ default_nombre }}" disabled required>
                     </div>
                     <div class="form-group">
                         <label for="email">Correo</label>
-                        <input id="email" name="email" type="email" value="{{ default_email }}" required>
+                        <input id="email" name="email" type="email" value="{{ default_email }}" disabled required>
                     </div>
                     <div class="form-group">
                         <label for="telefono">Teléfono</label>
-                        <input id="telefono" name="telefono" required>
+                        <input id="telefono" name="telefono" disabled required>
                     </div>
                     <div class="form-group">
                         <label for="personas">Personas</label>
@@ -453,9 +453,105 @@
         }
 
         function startEdit(reservaId) {
-            document.getElementById('reservaId').value = reservaId;
-            document.getElementById('submitBtn').textContent = 'Guardar cambios';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            fetch(`/reservas/${reservaId}/datos/`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.error || `Error ${response.status}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Cargar datos en el formulario
+                document.getElementById('reservaId').value = data.id;
+                document.getElementById('mesaId').value = data.mesa_id;
+                document.getElementById('nombre').value = data.nombre_cliente;
+                document.getElementById('email').value = data.email;
+                document.getElementById('telefono').value = data.telefono;
+                document.getElementById('personas').disabled = true;
+                document.getElementById('fecha').disabled = true;
+                document.getElementById('hora').disabled = true;
+                document.getElementById('comentarios').disabled = true;
+                
+                // Cargar items del pedido
+                quantities = {};
+                data.items_pedido.forEach(item => {
+                    quantities[item.producto_id] = item.cantidad;
+                });
+                
+                // Actualizar visualización
+                renderCategoryTabs();
+                renderProducts();
+                renderTotals();
+                
+                // Mostrar timer
+                startEditingTimer(data.editable_hasta, data.tiempo_restante);
+                
+                // Cambiar botón y scroll
+                document.getElementById('submitBtn').textContent = 'Guardar cambios';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert(`No se pudo cargar la reserva: ${error.message}`);
+            });
+        }
+
+        function startEditingTimer(editableHasta, tiempoRestante) {
+            const timerDiv = document.createElement('div');
+            timerDiv.id = 'editing-timer';
+            timerDiv.className = 'timer-display';
+            
+            const formGrid = document.querySelector('.form-grid');
+            const existingTimer = document.getElementById('editing-timer');
+            if (existingTimer) existingTimer.remove();
+            formGrid.parentNode.insertBefore(timerDiv, formGrid.nextSibling);
+            
+            let segundosRestantes = tiempoRestante;
+            
+            const updateTimer = () => {
+                const minutos = Math.floor(segundosRestantes / 60);
+                const segundos = segundosRestantes % 60;
+                const colorEstilo = segundosRestantes < 60 ? '#dc2626' : '#ea8800';
+                
+                if (segundosRestantes <= 0) {
+                    timerDiv.innerHTML = '❌ La ventana de edición ha expirado';
+                    timerDiv.style.color = '#dc2626';
+                    document.getElementById('submitBtn').disabled = true;
+                } else {
+                    timerDiv.innerHTML = `⏳ Tiempo para editar: <span style="color: ${colorEstilo};">${minutos}:${segundos.toString().padStart(2, '0')}</span>`;
+                    segundosRestantes--;
+                }
+            };
+            
+            updateTimer();
+            const interval = setInterval(updateTimer, 1000);
+        }
+
+        function resetForm() {
+            document.getElementById('reservaId').value = '';
+            document.getElementById('mesaId').value = '';
+            document.getElementById('nombre').value = '';
+            document.getElementById('email').value = '';
+            document.getElementById('telefono').value = '';
+            document.getElementById('personas').disabled = false;
+            document.getElementById('fecha').disabled = false;
+            document.getElementById('hora').disabled = false;
+            document.getElementById('comentarios').disabled = false;
+            document.getElementById('comentarios').value = '';
+            
+            const timerDiv = document.getElementById('editing-timer');
+            if (timerDiv) timerDiv.remove();
+            
+            quantities = {};
+            document.getElementById('submitBtn').textContent = 'Reservar mesa';
+            renderCategoryTabs();
+            renderProducts();
+            renderTotals();
+            updateSubmitState();
         }
 
         document.getElementById('reservationForm').addEventListener('submit', (event) => {
@@ -466,6 +562,7 @@
                 return;
             }
             document.getElementById('itemsJson').value = JSON.stringify(selectedItems());
+            setTimeout(resetForm, 2000);
         });
         document.getElementById('hora').addEventListener('input', updateSubmitState);
 

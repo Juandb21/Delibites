@@ -15,6 +15,9 @@ from decimal import Decimal
 from datetime import datetime, timedelta, time
 from .forms import CustomAuthenticationForm, RegistroClienteForm, EmpleadoForm, ProductoForm
 from .models import Producto, Empleado, Pedido, DetallePedido, Venta, Mesa, Zona, Reserva, Categoria
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def pedidos_pendientes_pago_queryset():
@@ -1626,5 +1629,71 @@ def admin_producto_eliminar(request, id):
     except Exception as e:
         messages.error(request, f'Error al eliminar el producto: {str(e)}')
         return redirect('admin_menu')
+
+
+# ======================== VISTAS DE RESERVAS ========================
+
+@login_required(login_url='login')
+@require_http_methods(["GET"])
+def obtener_datos_reserva(request, id):
+    """
+    Vista API para obtener datos de una reserva específica para edición
+    Retorna JSON con todos los datos de la reserva y su pedido
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Debes iniciar sesión para editar reservas.'}, status=401)
+    
+    try:
+        reserva = Reserva.objects.select_related('mesa', 'pedido').prefetch_related(
+            'pedido__detalles__producto'
+        ).get(
+            id=id,
+            cliente=request.user
+        )
+    except Reserva.DoesNotExist:
+        return JsonResponse({'error': 'La reserva no existe o no tienes permiso para acceder a ella.'}, status=404)
+    
+    if not reserva.pedido:
+        return JsonResponse({'error': 'Esta reserva no tiene pedido asociado.'}, status=400)
+    
+    # Calcular tiempo restante para editar (5 minutos desde creación)
+    ahora = timezone.now()
+    editable_hasta = reserva.editable_hasta or reserva.pedido.fecha_creacion + timedelta(minutes=5)
+    tiempo_restante = max(0, int((editable_hasta - ahora).total_seconds()))
+    
+    if tiempo_restante <= 0:
+        return JsonResponse({
+            'error': 'La ventana de edición ya expiró. Solo puedes editar dentro de 5 minutos después de crear la reserva.'
+        }, status=403)
+    
+    try:
+        items_pedido = [
+            {
+                'producto_id': detalle.producto.id,
+                'cantidad': detalle.cantidad,
+                'precio': float(detalle.producto.precio),
+                'nombre': detalle.producto.nombre,
+            }
+            for detalle in reserva.pedido.detalles.all()
+        ]
+        
+        return JsonResponse({
+            'id': reserva.id,
+            'mesa_id': reserva.mesa.id,
+            'mesa_numero': reserva.mesa.numero,
+            'nombre_cliente': reserva.cliente.first_name or reserva.cliente.username,
+            'email': reserva.cliente.email,
+            'telefono': reserva.telefono,
+            'cantidad_personas': reserva.cantidad_personas,
+            'fecha_reserva': reserva.fecha_reserva.strftime('%Y-%m-%d'),
+            'hora_reserva': reserva.hora_reserva.strftime('%H:%M'),
+            'comentarios': reserva.comentarios or '',
+            'items_pedido': items_pedido,
+            'editable_hasta': editable_hasta.isoformat(),
+            'tiempo_restante': tiempo_restante,
+        })
+    except Exception as e:
+        logger.error(f'Error obteniendo datos de reserva {id}: {str(e)}')
+        return JsonResponse({'error': 'Error al obtener los datos de la reserva.'}, status=500)
 
 
